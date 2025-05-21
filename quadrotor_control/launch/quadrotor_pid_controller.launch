@@ -14,20 +14,19 @@
   <param name="robot_description" 
          command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/urdf/quadrotor_main.xacro'" />
 
+  <!-- Launch arguments for spawn position and orientation -->
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
+  <arg name="z" default="2.3" />
+  <arg name="yaw" default="0.0" />
+
   <!-- Spawn the quadrotor in Gazebo -->
   <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
-        args="-param robot_description -urdf -model quadrotor -z 5.0" 
+        args="-param robot_description -urdf -model quadrotor -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)" 
         respawn="false" output="screen"/>
 
   <!-- Start the quadrotor controller -->
-  <node name="quadrotor_pid" pkg="quadrotor_control" type="pid_controller.py" output="screen">
-    <param name="kp_pos" value="1.0"/>
-    <param name="ki_pos" value="0.1"/>
-    <param name="kd_pos" value="0.5"/>
-    <param name="kp_att" value="3.0"/>
-    <param name="ki_att" value="0.1"/>
-    <param name="kd_att" value="1.0"/>
-  </node>
+  <node name="quadrotor_pid" pkg="quadrotor_control" type="pid_controller.py" output="screen"></node>
 
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
