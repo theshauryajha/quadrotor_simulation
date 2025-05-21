@@ -1,0 +1,9 @@
+# ROS build and config files
+build/
+devel/
+install/
+log/
+*.pyc
+*.swp
+*.user
+
