@@ -22,7 +22,7 @@ class DronePID:
         self.target_height = 5.0
 
         # PID Control params
-        self.thrust_Kp, self.thrust_Kd, self.thrust_Ki = 5.0, 0.0, 0.0
+        self.thrust_Kp, self.thrust_Kd, self.thrust_Ki = 5.0, 2.0, 0.0
         self.prev_height_error = 0.0
         self.height_error_integral = 0.0
 
