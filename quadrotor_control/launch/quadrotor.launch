@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Launch Gazebo with an empty world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="worlds/empty.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load the URDF into the parameter server -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/urdf/quadrotor_main.xacro'" />
+
+  <!-- Spawn the quadrotor in Gazebo -->
+  <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
+        args="-param robot_description -urdf -model quadrotor -z 5.0" 
+        respawn="false" output="screen"/>
+
+  <!-- Start the quadrotor controller -->
+  <node name="quadrotor_controller" pkg="quadrotor_control" type="controller.py" output="screen">
+    <param name="kp_pos" value="1.0"/>
+    <param name="ki_pos" value="0.1"/>
+    <param name="kd_pos" value="0.5"/>
+    <param name="kp_att" value="3.0"/>
+    <param name="ki_att" value="0.1"/>
+    <param name="kd_att" value="1.0"/>
+  </node>
+
+  <!-- Start RViz for visualization -->
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
+
+</launch>
