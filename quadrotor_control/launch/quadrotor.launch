@@ -20,7 +20,7 @@
         respawn="false" output="screen"/>
 
   <!-- Start the quadrotor controller -->
-  <node name="quadrotor_controller" pkg="quadrotor_control" type="controller.py" output="screen">
+  <node name="quadrotor_pid" pkg="quadrotor_control" type="pid_controller.py" output="screen">
     <param name="kp_pos" value="1.0"/>
     <param name="ki_pos" value="0.1"/>
     <param name="kd_pos" value="0.5"/>
