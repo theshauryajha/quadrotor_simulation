@@ -18,13 +18,35 @@ class DronePID:
         self.attitude = np.zeros(3)
 
         self.command = Wrench()
+        self.command.torque.x = 0 # No pitch
+        self.command.torque.y = 0 # No roll
 
-        self.target_height = 5.0
+        self.target_point = Point()
+        self.target_attitude = np.zeros(3)
 
-        # PID Control params
-        self.thrust_Kp, self.thrust_Kd, self.thrust_Ki = 5.0, 2.0, 0.0
+        self.target_point.x = 2.0
+        self.target_point.y = 3.0
+        self.target_point.z = 5.0
+        self.target_attitude[2] = 1.57
+
+        # PID gain constants
+        self.surge_Kp, self.surge_Kd, self.surge_Ki = 0.0, 0.0, 0.0
+        self.sway_Kp, self.sway_Kd, self.sway_Ki = 0.0, 0.0, 0.0
+        self.thrust_Kp, self.thrust_Kd, self.thrust_Ki = 5.0, 0.0, 0.0
+        self.yaw_Kp, self.yaw_Kd, self.yaw_Ki = 0.0, 0.0, 0.0
+
+        # PID parameters
+        self.prev_x_error = 0.0
+        self.x_error_integral = 0.0
+
+        self.prev_y_error = 0.0
+        self.y_error_integral = 0.0
+
         self.prev_height_error = 0.0
         self.height_error_integral = 0.0
+
+        self.prev_heading_error = 0.0
+        self.heading_error_integral = 0.0
 
         self.rate = rospy.Rate(50)
 
@@ -43,17 +65,35 @@ class DronePID:
 
         self.hover()
 
+    def calculate_pid_control(self, error, derivative, integral, Kp, Kd, Ki):
+        control = (Kp * error + Kd * derivative + Ki * integral)
+        return control
+
     def hover(self):
-        height_error = self.target_height - self.position.z
+        x_error = self.target_point.x - self.position.x
+        y_error = self.target_point.y - self.position.y
+        height_error = self.target_point.z - self.position.z
+        heading_error = self.target_attitude[2] - self.attitude[2]
+
+        x_error_derivative = x_error - self.prev_x_error
+        self.x_error_integral += x_error
+
+        y_error_derivative = y_error - self.prev_y_error
+        self.y_error_integral += y_error
 
         height_error_derivative = height_error - self.prev_height_error
         self.height_error_integral += height_error
 
-        thrust = (self.thrust_Kp * height_error +
-                  self.thrust_Kd * height_error_derivative +
-                  self.thrust_Ki * self.height_error_integral)
+        heading_error_derivative = heading_error - self.prev_heading_error
+        self.heading_error_integral += heading_error
+
+        thrust = self.calculate_pid_control(height_error, height_error_derivative, self.height_error_integral,
+                                            self.thrust_Kp, self.thrust_Kd, self.thrust_Ki)
         
+        self.prev_x_error = x_error
+        self.prev_y_error = y_error
         self.prev_height_error = height_error
+        self.prev_heading_error = heading_error
 
         self.command.force.z = thrust
         self.command.force.x, self.command.force.y = 0.0, 0.0

@@ -98,6 +98,41 @@
     <material>Gazebo/Blue</material>
   </gazebo>
 
+  <!-- Arms -->
+  <gazebo reference="front_right_arm_link">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  
+  <gazebo reference="front_left_arm_link">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  
+  <gazebo reference="back_right_arm_link">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  
+  <gazebo reference="back_left_arm_link">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <!-- Motors -->
+  <gazebo reference="front_right_motor_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  
+  <gazebo reference="front_left_motor_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  
+  <gazebo reference="back_right_motor_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  
+  <gazebo reference="back_left_motor_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- Propellers -->
   <gazebo reference="front_right_rotor_link">
     <material>Gazebo/Green</material>
   </gazebo>
@@ -112,6 +147,23 @@
 
   <gazebo reference="back_left_rotor_link">
     <material>Gazebo/Red</material>
+  </gazebo>
+
+  <!-- Landing gear -->
+  <gazebo reference="front_right_leg_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  
+  <gazebo reference="front_left_leg_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  
+  <gazebo reference="back_right_leg_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  
+  <gazebo reference="back_left_leg_link">
+    <material>Gazebo/Black</material>
   </gazebo>
 
   <!-- Quadrotor Plugin (handles physics) -->
