@@ -90,14 +90,17 @@ class DronePID:
         thrust = self.calculate_pid_control(height_error, height_error_derivative, self.height_error_integral,
                                             self.thrust_Kp, self.thrust_Kd, self.thrust_Ki)
         
+        surge, sway, yaw = 0.0, 0.0, 0.0
+        
         self.prev_x_error = x_error
         self.prev_y_error = y_error
         self.prev_height_error = height_error
         self.prev_heading_error = heading_error
 
+        self.command.force.x = surge
+        self.command.force.y = sway
         self.command.force.z = thrust
-        self.command.force.x, self.command.force.y = 0.0, 0.0
-        self.command.torque.x, self.command.torque.y, self.command.torque.z = 0.0, 0.0, 0.0
+        self.command.torque.z = yaw
 
         self.cmd_pub.publish(self.command)
 
