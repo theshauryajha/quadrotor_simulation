@@ -7,19 +7,103 @@ from geometry_msgs.msg import Point, Wrench
 from tf.transformations import euler_from_quaternion
 
 
-class DronePID:
+class PIDController:
+    def __init__(self, target_position, target_attitude):
+        self.target_position = target_position
+        self.target_attitude = target_attitude
+
+        # PID parameters
+        self.prev_height_error = 0.0
+        self.height_error_integral = 0.0
+
+        self.prev_x_error = 0.0
+        self.x_error_integral = 0.0
+
+        self.prev_y_error = 0.0
+        self.y_error_integral = 0.0
+
+        self.prev_heading_error = 0.0
+        self.heading_error_integral = 0.0
+
+        self.dt = 0.02
+
+    def thrust(self, current_height):
+        Kp, Ki, Kd = 5.0, 0.0, 0.0
+
+        height_error = self.target_position.z - current_height
+        height_error_derivative = (height_error - self.prev_height_error) / self.dt
+        self.height_error_integral += height_error * self.dt
+
+        thrust_command = (Kp * height_error +
+                          Kd * height_error_derivative +
+                          Ki * self.height_error_integral)
+        
+        self.prev_height_error = height_error
+
+        return thrust_command
+    
+    def surge(self, current_x):
+        Kp, Ki, Kd = 5.0, 0.0, 0.0
+
+        x_error = self.target_position.x - current_x
+        x_error_derivative = (x_error - self.prev_x_error) / self.dt
+        self.x_error_integral += x_error * self.dt
+
+        surge_command = (Kp * x_error +
+                         Kd * x_error_derivative +
+                         Ki * self.x_error_integral)
+        
+        self.prev_x_error = x_error
+
+        return surge_command
+    
+    def sway(self, current_y):
+        Kp, Ki, Kd = 5.0, 0.0, 0.0
+
+        y_error = self.target_position.y - current_y
+        y_error_derivative = (y_error - self.prev_y_error) / self.dt
+        self.y_error_integral += y_error * self.dt
+
+        sway_command = (Kp * y_error +
+                        Kd * y_error_derivative +
+                        Ki * self.y_error_integral)
+        
+        self.prev_y_error = y_error
+        
+        return sway_command
+    
+    def yaw(self, current_heading):
+        Kp, Ki, Kd = 1.0, 0.0, 0.0
+
+        heading_error = self.normalize_angle(self.target_attitude[2] - current_heading)
+        heading_error_derivative = (heading_error - self.prev_heading_error) / self.dt
+        self.heading_error_integral += heading_error * self.dt
+
+        yaw_command = (Kp * heading_error +
+                       Kd * heading_error_derivative +
+                       Ki * self.heading_error_integral)
+        
+        self.prev_heading_error = heading_error
+
+        return yaw_command
+    
+    def normalize_angle(self, angle):
+        while angle < -np.pi:
+            angle += 2 * np.pi
+        while angle > np.pi:
+            angle -= 2 * np.pi
+        return angle
+
+
+class Drone:
     def __init__(self):
         rospy.init_node('quadrotor_pid', anonymous=True)
 
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
 
-        self.position = Point()
-        self.attitude = np.zeros(3)
-
-        self.command = Wrench()
-        self.command.torque.x = 0 # No pitch
-        self.command.torque.y = 0 # No roll
+        self.current_position = Point()
+        self.current_attitude = np.zeros(3)
 
         self.target_point = Point()
         self.target_attitude = np.zeros(3)
@@ -27,87 +111,40 @@ class DronePID:
         self.target_point.x = 2.0
         self.target_point.y = 3.0
         self.target_point.z = 5.0
-        self.target_attitude[2] = 1.57
+        self.target_attitude[2] = np.pi / 2
 
-        # PID gain constants
-        self.surge_Kp, self.surge_Kd, self.surge_Ki = 0.0, 0.0, 0.0
-        self.sway_Kp, self.sway_Kd, self.sway_Ki = 0.0, 0.0, 0.0
-        self.thrust_Kp, self.thrust_Kd, self.thrust_Ki = 5.0, 0.0, 0.0
-        self.yaw_Kp, self.yaw_Kd, self.yaw_Ki = 0.0, 0.0, 0.0
-
-        # PID parameters
-        self.prev_x_error = 0.0
-        self.x_error_integral = 0.0
-
-        self.prev_y_error = 0.0
-        self.y_error_integral = 0.0
-
-        self.prev_height_error = 0.0
-        self.height_error_integral = 0.0
-
-        self.prev_heading_error = 0.0
-        self.heading_error_integral = 0.0
+        self.controller = PIDController(self.target_point, self.target_attitude)
+        self.command = Wrench()
 
         self.rate = rospy.Rate(50)
 
     def odom_callback(self, data):
-        self.position = data.pose.pose.position
+        self.current_position = data.pose.pose.position
 
         quat = [data.pose.pose.orientation.x,
                 data.pose.pose.orientation.y,
                 data.pose.pose.orientation.z,
                 data.pose.pose.orientation.w]
         
-        self.attitude = euler_from_quaternion(quat)
+        self.current_attitude = euler_from_quaternion(quat)
 
-        rospy.loginfo(f"Current position(x,y,z): {self.position.x:.2f}, {self.position.y:.2f}, {self.position.z:.2f}")
-        rospy.loginfo(f"Current attitude (roll,pitch,yaw): {self.attitude[0]:.2f}, {self.attitude[1]:.2f}, {self.attitude[2]:.2f}")
+        rospy.loginfo(f"Current position(x,y,z): {self.current_position.x:.2f}, {self.current_position.y:.2f}, {self.current_position.z:.2f}")
+        rospy.loginfo(f"Current attitude (roll,pitch,yaw): {self.current_attitude[0]:.2f}, {self.current_attitude[1]:.2f}, {self.current_attitude[2]:.2f}")
 
-        self.hover()
+        self.fly()
 
-    def calculate_pid_control(self, error, derivative, integral, Kp, Kd, Ki):
-        control = (Kp * error + Kd * derivative + Ki * integral)
-        return control
-
-    def hover(self):
-        x_error = self.target_point.x - self.position.x
-        y_error = self.target_point.y - self.position.y
-        height_error = self.target_point.z - self.position.z
-        heading_error = self.target_attitude[2] - self.attitude[2]
-
-        x_error_derivative = x_error - self.prev_x_error
-        self.x_error_integral += x_error
-
-        y_error_derivative = y_error - self.prev_y_error
-        self.y_error_integral += y_error
-
-        height_error_derivative = height_error - self.prev_height_error
-        self.height_error_integral += height_error
-
-        heading_error_derivative = heading_error - self.prev_heading_error
-        self.heading_error_integral += heading_error
-
-        thrust = self.calculate_pid_control(height_error, height_error_derivative, self.height_error_integral,
-                                            self.thrust_Kp, self.thrust_Kd, self.thrust_Ki)
-        
-        surge, sway, yaw = 0.0, 0.0, 0.0
-        
-        self.prev_x_error = x_error
-        self.prev_y_error = y_error
-        self.prev_height_error = height_error
-        self.prev_heading_error = heading_error
-
-        self.command.force.x = surge
-        self.command.force.y = sway
-        self.command.force.z = thrust
-        self.command.torque.z = yaw
+    def fly(self):
+        self.command.force.z = self.controller.thrust(self.current_position.z)
+        self.command.force.x = self.controller.surge(self.current_position.x)
+        self.command.force.y = self.controller.sway(self.current_position.y)
+        self.command.torque.z = self.controller.yaw(self.current_attitude[2])
 
         self.cmd_pub.publish(self.command)
 
 
 if __name__ == "__main__":
     try:
-        drone = DronePID()
+        drone = Drone()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
