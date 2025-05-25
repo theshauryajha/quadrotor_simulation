@@ -6,26 +6,31 @@
 
 ### Use the package
 - Create a ROS workspace
+
   ```bash
   mkdir catkin_ws
   ```
 - Inside the workspace, clone this repository
+
   ```bash
   cd catkin_ws
   git clone https://github.com/theshauryajha/quadrotor_simulation.git
   mv quadrotor_simulation src
   ```
 - Make the Python scripts and launch files executable
+
   ```bash
   chmod +x src/quadrotor_control/src/scripts/*
   chmod +x src/quadrotor_control/launch/*
   ```
 - Build and source the workspace
+
   ```bash
   catkin_make
   source devel/setup.bash
   ```
 - Start the simulation
+
   ```bash
   roslaunch quadrotor_control quadrotor_pid_control.launch
   ```
