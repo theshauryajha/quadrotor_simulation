@@ -5,14 +5,14 @@
 - The quadrotor_control package contains the controllers for the drone and the launch files to run the simulation
 
 ### Use the package
-- Create a catkin workspace
+- Create a ROS workspace
   ```bash
   mkdir catkin_ws
   ```
 - Inside the workspace, clone this repository
   ```bash
   cd catkin_ws
-  git clone git@github.com:theshauryajha/quadrotor_simulation.git
+  git clone https://github.com/theshauryajha/quadrotor_simulation.git
   mv quadrotor_simulation src
   ```
 - Make the Python scripts and launch files executable
