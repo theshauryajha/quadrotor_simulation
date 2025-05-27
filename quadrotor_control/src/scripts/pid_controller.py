@@ -32,7 +32,7 @@ class PIDController:
         self.prev_pitch_error = 0.0
         self.pitch_error_integral = 0.0
 
-        self.dt = 0.01 #10ms / iteration
+        self.dt = 0.01 # 10ms / iteration
 
     def roll(self, current_roll_velocity):
         Kp, Ki, Kd = 1.0, 0.0, 0.0
@@ -65,7 +65,7 @@ class PIDController:
         return pitch_command
 
     def thrust(self, current_height):
-        Kp, Ki, Kd = 20.0, 2.0, 1.0
+        Kp, Ki, Kd = 25.0, 0.0, 0.0
 
         height_error = self.target_position.z - current_height
         height_error_derivative = (height_error - self.prev_height_error) / self.dt
@@ -142,6 +142,7 @@ class Drone:
         self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
 
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
+        self.goal_pub = rospy.Publisher('/goal_pose', Point, queue_size=10)
 
         self.current_position = Point()
         self.current_attitude = np.zeros(3)
@@ -153,7 +154,7 @@ class Drone:
         self.controller = PIDController(self.target_point, self.target_heading)
         self.command = Wrench()
 
-        self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly)
+        self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
     def imu_callback(self, data):
         self.current_angular_velocity = data.angular_velocity
@@ -180,8 +181,8 @@ class Drone:
     def fly(self, event):
         self.command.force.z = self.controller.thrust(self.current_position.z)
 
-        self.command.force.x = self.controller.surge(self.current_position.x)
-        self.command.force.y = self.controller.sway(self.current_position.y)
+        self.command.force.x = self.controller.surge(self.current_position.x) * 0
+        self.command.force.y = self.controller.sway(self.current_position.y) * 0
 
         self.command.torque.z = self.controller.yaw(self.current_attitude[2]) * 0
 
@@ -190,6 +191,7 @@ class Drone:
         self.command.torque.y = self.controller.roll(self.current_angular_velocity.y)
 
         self.cmd_pub.publish(self.command)
+        self.goal_pub.publish(self.target_point)
 
 
 if __name__ == "__main__":
