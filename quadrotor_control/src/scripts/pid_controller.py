@@ -3,14 +3,15 @@
 import rospy
 import numpy as np
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Point, Wrench
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Point, Wrench, Vector3
 from tf.transformations import euler_from_quaternion
 
 
 class PIDController:
-    def __init__(self, target_position, target_attitude):
+    def __init__(self, target_position, target_heading):
         self.target_position = target_position
-        self.target_attitude = target_attitude
+        self.target_heading = target_heading
 
         # PID parameters
         self.prev_height_error = 0.0
@@ -25,10 +26,46 @@ class PIDController:
         self.prev_heading_error = 0.0
         self.heading_error_integral = 0.0
 
-        self.dt = 0.02
+        self.prev_roll_error = 0.0
+        self.roll_error_integral = 0.0
+
+        self.prev_pitch_error = 0.0
+        self.pitch_error_integral = 0.0
+
+        self.dt = 0.01 #10ms / iteration
+
+    def roll(self, current_roll_velocity):
+        Kp, Ki, Kd = 1.0, 0.0, 0.0
+
+        roll_error = -current_roll_velocity
+        roll_error_derivative = (roll_error - self.prev_roll_error) / self.dt
+        self.roll_error_integral += roll_error * self.dt
+
+        roll_command = (Kp * roll_error +
+                        Kd * roll_error_derivative +
+                        Ki * self.roll_error_integral)
+        
+        self.prev_roll_error = roll_error
+
+        return roll_command
+    
+    def pitch(self, current_pitch_velocity):
+        Kp, Ki, Kd = 1.0, 0.0, 0.0
+
+        pitch_error = -current_pitch_velocity
+        pitch_error_derivative = (pitch_error - self.prev_pitch_error) / self.dt
+        self.pitch_error_integral += pitch_error * self.dt
+
+        pitch_command = (Kp * pitch_error +
+                         Kd * pitch_error_derivative +
+                         Ki * self.pitch_error_integral)
+        
+        self.prev_pitch_error = pitch_error
+
+        return pitch_command
 
     def thrust(self, current_height):
-        Kp, Ki, Kd = 5.0, 0.0, 0.0
+        Kp, Ki, Kd = 10.0, 0.0, 0.0
 
         height_error = self.target_position.z - current_height
         height_error_derivative = (height_error - self.prev_height_error) / self.dt
@@ -75,7 +112,9 @@ class PIDController:
     def yaw(self, current_heading):
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
-        heading_error = self.normalize_angle(self.target_attitude[2] - current_heading)
+        heading_error = self.target_heading - current_heading
+        heading_error = self.normalize_angle(heading_error)
+
         heading_error_derivative = (heading_error - self.prev_heading_error) / self.dt
         self.heading_error_integral += heading_error * self.dt
 
@@ -100,23 +139,27 @@ class Drone:
         rospy.init_node('quadrotor_pid', anonymous=True)
 
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
+        self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
+
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
 
         self.current_position = Point()
         self.current_attitude = np.zeros(3)
+        self.current_angular_velocity = Vector3()
 
-        self.target_point = Point()
-        self.target_attitude = np.zeros(3)
+        self.target_point = Point(1.0, 1.0, 1.5)
+        self.target_heading = np.pi / 2
 
-        self.target_point.x = 2.0
-        self.target_point.y = 3.0
-        self.target_point.z = 5.0
-        self.target_attitude[2] = np.pi / 2
-
-        self.controller = PIDController(self.target_point, self.target_attitude)
+        self.controller = PIDController(self.target_point, self.target_heading)
         self.command = Wrench()
 
-        self.rate = rospy.Rate(50)
+        self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly)
+
+    def imu_callback(self, data):
+        self.current_angular_velocity = data.angular_velocity
+        
+        #rospy.loginfo(f"Current pitch velocity: {self.current_angular_velocity.x:2f}")
+        #rospy.loginfo(f"Current roll velocity: {self.current_angular_velocity.y:2f}")
 
     def odom_callback(self, data):
         self.current_position = data.pose.pose.position
@@ -128,16 +171,20 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        rospy.loginfo(f"Current position(x,y,z): {self.current_position.x:.2f}, {self.current_position.y:.2f}, {self.current_position.z:.2f}")
-        rospy.loginfo(f"Current attitude (roll,pitch,yaw): {self.current_attitude[0]:.2f}, {self.current_attitude[1]:.2f}, {self.current_attitude[2]:.2f}")
+        rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
+        #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
-        self.fly()
-
-    def fly(self):
+    def fly(self, event):
         self.command.force.z = self.controller.thrust(self.current_position.z)
-        self.command.force.x = self.controller.surge(self.current_position.x)
-        self.command.force.y = self.controller.sway(self.current_position.y)
-        self.command.torque.z = self.controller.yaw(self.current_attitude[2])
+
+        self.command.force.x = self.controller.surge(self.current_position.x) * 0
+        self.command.force.y = self.controller.sway(self.current_position.y) * 0
+
+        self.command.torque.z = self.controller.yaw(self.current_attitude[2]) * 0
+
+        # Stabilize pitch and roll using rate controllers
+        self.command.torque.x = self.controller.pitch(self.current_angular_velocity.x)
+        self.command.torque.y = self.controller.roll(self.current_angular_velocity.y)
 
         self.cmd_pub.publish(self.command)
 
