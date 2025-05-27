@@ -33,7 +33,7 @@
 
   <!-- Start rqt_multiplot -->
   <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot" 
-        args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/plot/height_pid.xml" 
+        args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/plot/height_pid.xml --multiplot-run-all" 
         output="screen"/>
 
 </launch>
