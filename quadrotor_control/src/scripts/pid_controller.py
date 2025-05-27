@@ -65,7 +65,7 @@ class PIDController:
         return pitch_command
 
     def thrust(self, current_height):
-        Kp, Ki, Kd = 10.0, 0.0, 0.0
+        Kp, Ki, Kd = 20.0, 2.0, 1.0
 
         height_error = self.target_position.z - current_height
         height_error_derivative = (height_error - self.prev_height_error) / self.dt
@@ -171,14 +171,17 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
+        if abs(self.current_position.z - self.target_point.z) <= 0.1:
+            rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
+        else:
+            rospy.logwarn(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def fly(self, event):
         self.command.force.z = self.controller.thrust(self.current_position.z)
 
-        self.command.force.x = self.controller.surge(self.current_position.x) * 0
-        self.command.force.y = self.controller.sway(self.current_position.y) * 0
+        self.command.force.x = self.controller.surge(self.current_position.x)
+        self.command.force.y = self.controller.sway(self.current_position.y)
 
         self.command.torque.z = self.controller.yaw(self.current_attitude[2]) * 0
 
