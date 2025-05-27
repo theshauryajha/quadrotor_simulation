@@ -65,7 +65,7 @@ class PIDController:
         return pitch_command
 
     def thrust(self, current_height):
-        Kp, Ki, Kd = 25.0, 0.0, 0.0
+        Kp, Ki, Kd = 36.0, 72.0, 6.0
 
         height_error = self.target_position.z - current_height
         height_error_derivative = (height_error - self.prev_height_error) / self.dt
