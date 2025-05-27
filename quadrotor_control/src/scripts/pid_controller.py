@@ -65,7 +65,7 @@ class PIDController:
         return pitch_command
 
     def thrust(self, current_height):
-        Kp, Ki, Kd = 36.0, 72.0, 6.0
+        Kp, Ki, Kd = 9.0, 8.5, 11.5
 
         height_error = self.target_position.z - current_height
         height_error_derivative = (height_error - self.prev_height_error) / self.dt
@@ -148,7 +148,7 @@ class Drone:
         self.current_attitude = np.zeros(3)
         self.current_angular_velocity = Vector3()
 
-        self.target_point = Point(1.0, 1.0, 1.5)
+        self.target_point = Point(1.0, 1.0, 5.0)
         self.target_heading = np.pi / 2
 
         self.controller = PIDController(self.target_point, self.target_heading)
