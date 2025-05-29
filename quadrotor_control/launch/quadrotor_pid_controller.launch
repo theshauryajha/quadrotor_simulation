@@ -33,7 +33,7 @@
 
   <!-- Start rqt_multiplot -->
   <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
-        args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/plot/xy_pid.xml --multiplot-run-all" 
+        args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/config/xy_pid.xml --multiplot-run-all" 
         output="screen"/>
 
 </launch>
