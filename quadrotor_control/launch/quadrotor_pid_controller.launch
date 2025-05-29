@@ -21,7 +21,7 @@
   <arg name="yaw" default="0.0" />
 
   <!-- Launch argument for rqt_multiplot configuration -->
-  <arg name="plot_config" default="xy_plot.xml" />
+  <arg name="plot_config" default="" />
 
   <!-- Spawn the quadrotor in Gazebo -->
   <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
@@ -34,8 +34,10 @@
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
 
-  <!-- Start rqt_multiplot -->
-  <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
-        args="--multiplot-config $(find quadrotor_description)/config/$(arg plot_config) --multiplot-run-all" 
-        output="screen"/>
+  <!-- Start rqt_multiplot (only if plot_config is specified) -->
+  <group if="$(eval arg('plot_config') != '')">
+    <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
+          args="--multiplot-config $(find quadrotor_description)/config/$(arg plot_config) --multiplot-run-all" 
+          output="screen"/>
+  </group>
 </launch>
