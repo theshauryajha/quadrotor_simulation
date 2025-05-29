@@ -32,8 +32,9 @@
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
 
   <!-- Start rqt_multiplot -->
-  <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot" 
-        args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/plot/height_pid.xml --multiplot-run-all" 
-        output="screen"/>
-
+  <!--
+  <node pkg="rqt_multiplot" type="rqt_multiplot" name="rqt_multiplot" output="screen">
+    <param name="multiplot_config" value="$(find quadrotor_control)/config/pid_plot.xml"/>
+  </node>
+  -->
 </launch>

@@ -149,7 +149,7 @@ class Drone:
         self.current_angular_velocity = Vector3()
 
         self.target_point = Point(1.0, 1.0, 5.0)
-        self.target_heading = np.pi / 2
+        self.target_heading = 0
 
         self.controller = PIDController(self.target_point, self.target_heading)
         self.command = Wrench()
@@ -179,10 +179,10 @@ class Drone:
     def fly(self, event):
         self.command.force.z = self.controller.thrust(self.current_position.z)
 
-        self.command.force.x = self.controller.surge(self.current_position.x) * 0
-        self.command.force.y = self.controller.sway(self.current_position.y) * 0
+        self.command.force.x = self.controller.surge(self.current_position.x)
+        self.command.force.y = self.controller.sway(self.current_position.y)
 
-        self.command.torque.z = self.controller.yaw(self.current_attitude[2]) * 0
+        self.command.torque.z = self.controller.yaw(self.current_attitude[2])
 
         # Stabilize pitch and roll using rate controllers
         self.command.torque.x = self.controller.pitch(self.current_angular_velocity.x)
