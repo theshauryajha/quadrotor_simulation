@@ -172,10 +172,8 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        if abs(self.current_position.z - self.target_point.z) <= 0.1:
-            rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
-        else:
-            rospy.logwarn(f"Current height: {self.current_position.z:.2f}")
+        #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def fly(self, event):
