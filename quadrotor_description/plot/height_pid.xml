@@ -11,13 +11,13 @@
                     <axes>
                         <axes>
                             <x_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
+                                <custom_title>Time</custom_title>
+                                <title_type>1</title_type>
                                 <title_visible>true</title_visible>
                             </x_axis>
                             <y_axis>
-                                <custom_title>Untitled Axis</custom_title>
-                                <title_type>0</title_type>
+                                <custom_title>Height</custom_title>
+                                <title_type>1</title_type>
                                 <title_visible>true</title_visible>
                             </y_axis>
                         </axes>
@@ -86,7 +86,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/goal_pose</topic>
+                                    <topic>/target_point</topic>
                                     <type>geometry_msgs/Point</type>
                                 </x_axis>
                                 <y_axis>
@@ -99,7 +99,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>1</type>
                                     </scale>
-                                    <topic>/goal_pose</topic>
+                                    <topic>/target_point</topic>
                                     <type>geometry_msgs/Point</type>
                                 </y_axis>
                             </axes>
@@ -130,7 +130,7 @@
                         <visible>true</visible>
                     </legend>
                     <plot_rate>100</plot_rate>
-                    <title>Untitled Plot</title>
+                    <title>Height Error Plot</title>
                 </column_0>
             </row_0>
         </plots>

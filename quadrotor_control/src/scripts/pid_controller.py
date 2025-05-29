@@ -142,13 +142,13 @@ class Drone:
         self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
 
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
-        self.goal_pub = rospy.Publisher('/goal_pose', Point, queue_size=10)
+        self.target_pub = rospy.Publisher('/target_point', Point, queue_size=10)
 
         self.current_position = Point()
         self.current_attitude = np.zeros(3)
         self.current_angular_velocity = Vector3()
 
-        self.target_point = Point(1.0, 1.0, 5.0)
+        self.target_point = Point(4.0, 3.0, 5.0)
         self.target_heading = 0
 
         self.controller = PIDController(self.target_point, self.target_heading)
@@ -172,7 +172,7 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
@@ -189,7 +189,7 @@ class Drone:
         self.command.torque.y = self.controller.roll(self.current_angular_velocity.y)
 
         self.cmd_pub.publish(self.command)
-        self.goal_pub.publish(self.target_point)
+        self.target_pub.publish(self.target_point)
 
 
 if __name__ == "__main__":
