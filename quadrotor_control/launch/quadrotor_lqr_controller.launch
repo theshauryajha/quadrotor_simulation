@@ -17,7 +17,7 @@
   <!-- Launch arguments for spawn position and orientation -->
   <arg name="x" default="0.0" />
   <arg name="y" default="0.0" />
-  <arg name="z" default="2.3" />
+  <arg name="z" default="1.5" />
   <arg name="yaw" default="0.0" />
 
   <!-- Spawn the quadrotor in Gazebo -->
@@ -30,5 +30,4 @@
 
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
-
 </launch>
