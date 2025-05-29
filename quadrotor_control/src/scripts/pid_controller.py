@@ -9,7 +9,7 @@ from tf.transformations import euler_from_quaternion
 
 
 class PIDController:
-    def __init__(self, target_position, target_heading):
+    def __init__(self, target_position: Point, target_heading: float):
         self.target_position = target_position
         self.target_heading = target_heading
 
@@ -34,7 +34,7 @@ class PIDController:
 
         self.dt = 0.01 # 10ms / iteration
 
-    def roll(self, current_roll_velocity):
+    def roll(self, current_roll_velocity: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         roll_error = -current_roll_velocity
@@ -49,7 +49,7 @@ class PIDController:
 
         return roll_command
     
-    def pitch(self, current_pitch_velocity):
+    def pitch(self, current_pitch_velocity: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         pitch_error = -current_pitch_velocity
@@ -64,7 +64,7 @@ class PIDController:
 
         return pitch_command
 
-    def thrust(self, current_height):
+    def thrust(self, current_height: float) -> float:
         Kp, Ki, Kd = 5.0, 1.5, 3.5
 
         height_error = self.target_position.z - current_height
@@ -79,7 +79,7 @@ class PIDController:
 
         return thrust_command
     
-    def surge(self, current_x):
+    def surge(self, current_x: float) -> float:
         Kp, Ki, Kd = 1.3, 0.001, 1.6
 
         x_error = self.target_position.x - current_x
@@ -94,7 +94,7 @@ class PIDController:
 
         return surge_command
     
-    def sway(self, current_y):
+    def sway(self, current_y: float) -> float:
         Kp, Ki, Kd = 1.3, 0.001, 1.6
 
         y_error = self.target_position.y - current_y
@@ -109,7 +109,7 @@ class PIDController:
         
         return sway_command
     
-    def yaw(self, current_heading):
+    def yaw(self, current_heading: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         heading_error = self.target_heading - current_heading
@@ -126,7 +126,7 @@ class PIDController:
 
         return yaw_command
     
-    def normalize_angle(self, angle):
+    def normalize_angle(self, angle: float) -> float:
         while angle < -np.pi:
             angle += 2 * np.pi
         while angle > np.pi:
@@ -149,20 +149,20 @@ class Drone:
         self.current_angular_velocity = Vector3()
 
         self.target_point = Point(4.0, 3.0, 5.0)
-        self.target_heading = 0
+        self.target_heading = 0.0
 
         self.controller = PIDController(self.target_point, self.target_heading)
         self.command = Wrench()
 
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
-    def imu_callback(self, data):
+    def imu_callback(self, data: Imu):
         self.current_angular_velocity = data.angular_velocity
         
         #rospy.loginfo(f"Current pitch velocity: {self.current_angular_velocity.x:2f}")
         #rospy.loginfo(f"Current roll velocity: {self.current_angular_velocity.y:2f}")
 
-    def odom_callback(self, data):
+    def odom_callback(self, data: Odometry):
         self.current_position = data.pose.pose.position
 
         quat = [data.pose.pose.orientation.x,
@@ -172,10 +172,7 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        if abs(self.target_point.x - self.current_position.x) <= 0.1 and abs(self.target_point.x - self.current_position.x) <= 0.1:
-            rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
-        else:
-            rospy.logwarn(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 

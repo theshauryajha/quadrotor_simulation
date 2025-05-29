@@ -20,6 +20,9 @@
   <arg name="z" default="1.5" />
   <arg name="yaw" default="0.0" />
 
+  <!-- Launch argument for rqt_multiplot configuration -->
+  <arg name="plot_config" default="xy_plot.xml" />
+
   <!-- Spawn the quadrotor in Gazebo -->
   <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
         args="-param robot_description -urdf -model quadrotor -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)" 
@@ -33,6 +36,6 @@
 
   <!-- Start rqt_multiplot -->
   <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
-        args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/config/xy_plot.xml --multiplot-run-all" 
+        args="--multiplot-config $(find quadrotor_description)/config/$(arg plot_config) --multiplot-run-all" 
         output="screen"/>
 </launch>
