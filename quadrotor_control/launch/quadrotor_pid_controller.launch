@@ -35,5 +35,4 @@
   <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
         args="--multiplot-config /home/shaurya/coratia_ws/src/quadrotor_description/config/xy_plot.xml --multiplot-run-all" 
         output="screen"/>
-
 </launch>

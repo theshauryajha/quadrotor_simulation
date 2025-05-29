@@ -80,7 +80,7 @@ class PIDController:
         return thrust_command
     
     def surge(self, current_x):
-        Kp, Ki, Kd = 5.0, 0.0, 0.0
+        Kp, Ki, Kd = 1.3, 0.001, 1.6
 
         x_error = self.target_position.x - current_x
         x_error_derivative = (x_error - self.prev_x_error) / self.dt
@@ -95,7 +95,7 @@ class PIDController:
         return surge_command
     
     def sway(self, current_y):
-        Kp, Ki, Kd = 5.0, 0.0, 0.0
+        Kp, Ki, Kd = 1.3, 0.001, 1.6
 
         y_error = self.target_position.y - current_y
         y_error_derivative = (y_error - self.prev_y_error) / self.dt
@@ -172,7 +172,10 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        if abs(self.target_point.x - self.current_position.x) <= 0.1 and abs(self.target_point.x - self.current_position.x) <= 0.1:
+            rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        else:
+            rospy.logwarn(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
