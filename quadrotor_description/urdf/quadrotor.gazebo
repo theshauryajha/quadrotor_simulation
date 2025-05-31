@@ -167,13 +167,13 @@
   </gazebo>
 
   <!-- Quadrotor Plugin (handles physics) -->
-  <!-- <gazebo>
+  <gazebo>
     <plugin name="simple_quadrotor_dynamics" filename="libgazebo_ros_force.so">
       <robotNamespace>/quadrotor</robotNamespace>
       <bodyName>base_link</bodyName>
       <topicName>cmd_force</topicName>
     </plugin>
-  </gazebo> -->
+  </gazebo>
 
   <!-- Quadrotor Motor Plugin -->
   <gazebo>
