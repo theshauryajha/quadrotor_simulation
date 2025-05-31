@@ -29,9 +29,12 @@
   catkin_make
   source devel/setup.bash
   ```
-- To start the simulation
+- Start the simulation with one of the following
 
   ```bash
-  roslaunch quadrotor_control quadrotor_<arg>_control.launch
+  roslaunch quadrotor_control quadrotor_pid_control.launch
   ```
-  - Replace <arg> with pid or lqr
+  or
+  ```bash
+  roslaunch quadrotor_control quadrotor_lqr_control.launch
+  ```
