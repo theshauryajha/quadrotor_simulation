@@ -29,8 +29,14 @@
   catkin_make
   source devel/setup.bash
   ```
-- Start the simulation
+- To start the PID Control Simulation
 
   ```bash
   roslaunch quadrotor_control quadrotor_pid_control.launch
+  ```
+
+  - To start the LQR Control Simulation
+
+  ```bash
+  roslaunch quadrotor_control quadrotor_lqr_control.launch
   ```
