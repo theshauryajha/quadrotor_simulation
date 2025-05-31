@@ -2,7 +2,6 @@
 
 import rospy
 import numpy as np
-from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point, Wrench, Vector3
@@ -143,8 +142,6 @@ class Drone:
         self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
 
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
-        self.motor_pub = rospy.Publisher('/quadrotor/motor_speeds', Float64MultiArray, queue_size=10)
-
         self.target_pub = rospy.Publisher('/target_point', Point, queue_size=10)
 
         self.current_position = Point()
@@ -155,9 +152,7 @@ class Drone:
         self.target_heading = 0.0
 
         self.controller = PIDController(self.target_point, self.target_heading)
-
         self.command = Wrench()
-        self.motor_msg = Float64MultiArray()
 
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
@@ -194,8 +189,6 @@ class Drone:
         self.command.torque.y = self.controller.roll(self.current_angular_velocity.y)
 
         self.cmd_pub.publish(self.command)
-        #self.motor_msg.data = [900.0, 900.0, 1000.0, 1000.0]
-        #self.motor_pub.publish(self.motor_msg)
         self.target_pub.publish(self.target_point)
 
 
