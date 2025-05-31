@@ -35,7 +35,7 @@
   roslaunch quadrotor_control quadrotor_pid_control.launch
   ```
 
-  - To start the LQR Control Simulation
+- To start the LQR Control Simulation
 
   ```bash
   roslaunch quadrotor_control quadrotor_lqr_control.launch
