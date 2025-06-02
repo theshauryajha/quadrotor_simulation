@@ -32,9 +32,9 @@
 - Start the simulation with one of the following
 
   ```bash
-  roslaunch quadrotor_control quadrotor_pid_control.launch
+  roslaunch quadrotor_control pid_controller.launch
   ```
   or
   ```bash
-  roslaunch quadrotor_control quadrotor_lqr_control.launch
+  roslaunch quadrotor_control lqr_controller.launch
   ```
