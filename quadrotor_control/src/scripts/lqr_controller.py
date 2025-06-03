@@ -40,7 +40,7 @@ class DroneLQR:
 
     def fly(self, event):
         self.motor_msg.data = [1000.0, 1000.0, 1000.0, 1000.0]
-        self.motor_pub.publish(self.motor_msg)
+        #self.motor_pub.publish(self.motor_msg)
 
 
 if __name__ == "__main__":

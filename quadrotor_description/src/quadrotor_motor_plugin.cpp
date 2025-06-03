@@ -52,6 +52,8 @@ namespace gazebo
         this->motorSpeeds[i] = 0.0;
       
       ROS_INFO("Quadrotor motor plugin loaded successfully");
+      ROS_INFO("Motor configuration: [FR, FL, BL, BR] = [data[0], data[1], data[2], data[3]]");
+      ROS_INFO("Rotation directions: FR(CW), FL(CCW), BL(CW), BR(CCW)");
     }
     
     private: void OnMotorSpeeds(const std_msgs::Float64MultiArray::ConstPtr& msg)
@@ -80,34 +82,35 @@ namespace gazebo
         thrust[i] = this->thrustCoeff * this->motorSpeeds[i] * this->motorSpeeds[i];
       }
       
+      // Motor configuration: [FR, FL, BL, BR] = [data[0], data[1], data[2], data[3]]
+      // Motor positions in X configuration:
+      // FR (data[0]): Front Right  (+x, -y) - CW rotation
+      // FL (data[1]): Front Left   (+x, +y) - CCW rotation  
+      // BL (data[2]): Back Left    (-x, +y) - CW rotation
+      // BR (data[3]): Back Right   (-x, -y) - CCW rotation
+      
+      double thrustFR = thrust[0];  // Front Right
+      double thrustFL = thrust[1];  // Front Left
+      double thrustBL = thrust[2];  // Back Left
+      double thrustBR = thrust[3];  // Back Right
+      
       // Calculate total thrust (vertical force)
-      double totalThrust = thrust[0] + thrust[1] + thrust[2] + thrust[3];
+      double totalThrust = thrustFR + thrustFL + thrustBL + thrustBR;
       
       // Apply vertical thrust force
       ignition::math::Vector3d forceVector(0, 0, totalThrust);
       this->baseLink->AddForce(forceVector);
       
-      // Calculate torques based on quadrotor configuration
-      // Standard X configuration:
-      // Motor 0: Front Right (+x, -y) - CW
-      // Motor 1: Front Left  (+x, +y) - CCW  
-      // Motor 2: Back Right  (-x, -y) - CW
-      // Motor 3: Back Left   (-x, +y) - CCW
-      
       double sqrt2 = sqrt(2.0);
+
+      double pitchTorque = (this->armLength / sqrt2) * ((thrustFR + thrustFL) - (thrustBL + thrustBR));
       
-      // Roll torque (rotation around x-axis)
-      double rollTorque = (this->armLength / sqrt2) * (thrust[0] - thrust[1] + thrust[2] - thrust[3]);
+      double rollTorque = (this->armLength / sqrt2) * ((thrustFL + thrustBL) - (thrustFR + thrustBR));
       
-      // Pitch torque (rotation around y-axis) 
-      double pitchTorque = (this->armLength / sqrt2) * (thrust[0] + thrust[1] - thrust[2] - thrust[3]);
+      double yawTorque = this->momentCoeff * ((thrustFR - thrustFL + thrustBL - thrustBR));
       
-      // Yaw torque (rotation around z-axis) - from motor reaction torques
-      // CW motors (0,2) produce negative yaw, CCW motors (1,3) produce positive yaw
-      double yawTorque = this->momentCoeff * (-thrust[0] + thrust[1] - thrust[2] + thrust[3]);
-      
-      // Apply torques
-      ignition::math::Vector3d torqueVector(rollTorque, pitchTorque, yawTorque);
+      // Apply torques (order: pitch, roll, yaw for x, y, z axes)
+      ignition::math::Vector3d torqueVector(pitchTorque, rollTorque, yawTorque);
       this->baseLink->AddTorque(torqueVector);
     }
     
@@ -126,7 +129,7 @@ namespace gazebo
     // ROS subscriber
     private: ros::Subscriber motorSub;
     
-    // Motor speeds array [front_right, front_left, back_right, back_left]
+    // Motor speeds array [front_right, front_left, back_left, back_right]
     private: double motorSpeeds[4];
     
     // Motor parameters
