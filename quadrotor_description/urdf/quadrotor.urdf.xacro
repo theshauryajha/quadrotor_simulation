@@ -16,24 +16,24 @@
   <xacro:property name="motor_radius" value="0.015" />
   <xacro:property name="motor_height" value="0.03" />
   
-  <!-- Colors -->
+  <!-- Updated Colors for cleaner look -->
   <material name="black">
     <color rgba="0.0 0.0 0.0 1.0"/>
   </material>
-  <material name="blue">
-    <color rgba="0.2 0.2 0.8 1.0"/>
+  <material name="white">
+    <color rgba="1.0 1.0 1.0 1.0"/>
   </material>
-  <material name="green">
-    <color rgba="0.0 0.8 0.0 1.0"/>
-  </material>
-  <material name="red">
-    <color rgba="0.8 0.0 0.0 1.0"/>
-  </material>
-  <material name="gray">
-    <color rgba="0.5 0.5 0.5 1.0"/>
+  <material name="light_gray">
+    <color rgba="0.7 0.7 0.7 1.0"/>
   </material>
   <material name="dark_gray">
     <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.1 0.5 0.69 1.0"/>
+  </material>
+  <material name="green">
+    <color rgba="0.1 0.69 0.5 1.0"/>
   </material>
   
   <!-- Main quadrotor body (center) -->
@@ -49,7 +49,7 @@
       <geometry>
         <box size="${body_length} ${body_width} ${body_height}"/>
       </geometry>
-      <material name="blue"/>
+      <material name="white"/>
     </visual>
     
     <collision>
@@ -154,10 +154,10 @@
   </xacro:macro>
   
   <!-- Create four arms with rotors -->
-  <xacro:quadrotor_arm name="front_right" parent="base_link" x="1" y="-1" angle="${pi/4}" color="green"/>
-  <xacro:quadrotor_arm name="front_left" parent="base_link" x="1" y="1" angle="${3*pi/4}" color="green"/>
-  <xacro:quadrotor_arm name="back_right" parent="base_link" x="-1" y="-1" angle="${-pi/4}" color="red"/>
-  <xacro:quadrotor_arm name="back_left" parent="base_link" x="-1" y="1" angle="${-3*pi/4}" color="red"/>
+  <xacro:quadrotor_arm name="front_right" parent="base_link" x="1" y="-1" angle="${pi/4}" color="blue"/>
+  <xacro:quadrotor_arm name="front_left" parent="base_link" x="1" y="1" angle="${3*pi/4}" color="blue"/>
+  <xacro:quadrotor_arm name="back_left" parent="base_link" x="-1" y="1" angle="${-3*pi/4}" color="green"/>
+  <xacro:quadrotor_arm name="back_right" parent="base_link" x="-1" y="-1" angle="${-pi/4}" color="green"/>
   
   <!-- Landing gear -->
   <xacro:macro name="landing_leg" params="name parent x y">
@@ -194,8 +194,8 @@
   <!-- Create landing legs -->
   <xacro:landing_leg name="front_right" parent="base_link" x="1" y="-1"/>
   <xacro:landing_leg name="front_left" parent="base_link" x="1" y="1"/>
-  <xacro:landing_leg name="back_right" parent="base_link" x="-1" y="-1"/>
   <xacro:landing_leg name="back_left" parent="base_link" x="-1" y="1"/>
+  <xacro:landing_leg name="back_right" parent="base_link" x="-1" y="-1"/>
   
   <!-- Bottom camera -->
   <link name="bottom_camera_link">
@@ -240,7 +240,7 @@
       <geometry>
         <box size="0.015 0.015 0.005"/>
       </geometry>
-      <material name="red"/>
+      <material name="light_gray"/>
     </visual>
   </link>
   
@@ -263,7 +263,7 @@
       <geometry>
         <cylinder radius="0.015" length="0.005"/>
       </geometry>
-      <material name="black"/>
+      <material name="light_gray"/>
     </visual>
   </link>
   

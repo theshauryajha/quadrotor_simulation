@@ -95,7 +95,7 @@
 
   <!-- Visual appearance -->
   <gazebo reference="base_link">
-    <material>Gazebo/Blue</material>
+    <material>Gazebo/White</material>
   </gazebo>
 
   <!-- Arms -->
@@ -134,22 +134,22 @@
 
   <!-- Propellers -->
   <gazebo reference="front_right_rotor_link">
-    <material>Gazebo/Green</material>
+    <material>Gazebo/Blue</material>
   </gazebo>
 
   <gazebo reference="front_left_rotor_link">
-    <material>Gazebo/Green</material>
+    <material>Gazebo/Blue</material>
   </gazebo>
 
   <gazebo reference="back_right_rotor_link">
-    <material>Gazebo/Red</material>
+    <material>Gazebo/Green</material>
   </gazebo>
 
   <gazebo reference="back_left_rotor_link">
-    <material>Gazebo/Red</material>
+    <material>Gazebo/Green</material>
   </gazebo>
 
-  <!-- Landing gear -->
+  <!-- Landing gear - Black -->
   <gazebo reference="front_right_leg_link">
     <material>Gazebo/Black</material>
   </gazebo>
@@ -164,6 +164,21 @@
   
   <gazebo reference="back_left_leg_link">
     <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- Camera -->
+  <gazebo reference="bottom_camera_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- IMU -->
+  <gazebo reference="imu_link">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <!-- GPS -->
+  <gazebo reference="gps_link">
+    <material>Gazebo/Grey</material>
   </gazebo>
 
   <!-- Quadrotor Plugin (handles physics) -->
