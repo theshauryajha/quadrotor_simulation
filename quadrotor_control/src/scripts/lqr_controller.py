@@ -6,6 +6,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from tf.transformations import euler_from_quaternion
 
+
 class DroneLQR:
     def __init__(self):
         rospy.init_node('quadrotor_lqr', anonymous=True)
@@ -39,8 +40,8 @@ class DroneLQR:
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def fly(self, event):
-        self.motor_msg.data = [1000.0, 1000.0, 1000.0, 1000.0]
-        #self.motor_pub.publish(self.motor_msg)
+        self.motor_msg.data = [900.0, 900.0, 900.0, 900.0]
+        self.motor_pub.publish(self.motor_msg)
 
 
 if __name__ == "__main__":
