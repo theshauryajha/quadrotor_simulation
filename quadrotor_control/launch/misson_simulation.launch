@@ -20,14 +20,24 @@
   <arg name="z" default="1.5" />
   <arg name="yaw" default="0.0" />
 
+  <!-- Launch argument for rqt_multiplot configuration -->
+  <arg name="plot_config" default="" />
+
   <!-- Spawn the quadrotor in Gazebo -->
   <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
         args="-param robot_description -urdf -model quadrotor -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)" 
         respawn="false" output="screen"/>
 
-  <!-- Start the quadrotor controller -->
-  <node name="quadrotor_sim" pkg="quadrotor_control" type="mission_simulation.py" output="screen"></node>
+  <!-- Start the mission simulation -->
+  <node name="mission_sim" pkg="quadrotor_control" type="mission_simulation.py" output="screen"></node>
 
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
+
+  <!-- Start rqt_multiplot (only if plot_config is specified) -->
+  <group if="$(eval arg('plot_config') != '')">
+    <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
+          args="--multiplot-config $(find quadrotor_description)/config/$(arg plot_config) --multiplot-run-all" 
+          output="screen"/>
+  </group>
 </launch>
