@@ -59,7 +59,7 @@ class Controller:
         return thrust_command
     
     def surge(self, current_x: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 1.6
+        Kp, Ki, Kd = 1.3, 0.001, 2.9
 
         x_error = self.target_point.x - current_x
         x_error_derivative = (x_error - self.prev_x_error) / self.dt
@@ -74,7 +74,7 @@ class Controller:
         return surge_command
     
     def sway(self, current_y: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 1.6
+        Kp, Ki, Kd = 1.3, 0.001, 2.9
 
         y_error = self.target_point.y - current_y
         y_error_derivative = (y_error - self.prev_y_error) / self.dt
@@ -201,7 +201,7 @@ class Drone:
     def at_target_xy(self):
         dx = self.target_position.x - self.current_position.x
         dy = self.target_position.y - self.current_position.y
-        return sqrt(dx**2 + dy**2) <= 0.05
+        return dx <= 0.05 and dy <= 0.05
     
     def hover_complete(self):
         elapsed_time = rospy.Time.now() - self.state_start_time
