@@ -219,7 +219,7 @@ class Drone:
         dy = self.target_position.y - self.current_position.y
         vx = self.current_velocity.linear.x
         vy = self.current_velocity.linear.y
-        return dx <= 0.05 and dy <= 0.05 and vx <= 0.01 and vy <= 0.01
+        return dx <= 0.05 and dy <= 0.05 and vx <= 0.05 and vy <= 0.05
     
     def hover_complete(self):
         elapsed_time = rospy.Time.now() - self.state_start_time
