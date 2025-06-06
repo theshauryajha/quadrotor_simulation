@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Point, Wrench, Vector3
+from geometry_msgs.msg import Point, Twist, Wrench
 from tf.transformations import euler_from_quaternion
 
 
@@ -34,7 +34,7 @@ class PIDController:
 
         self.dt = 0.01 # 10ms / iteration
 
-    def roll(self, current_roll_velocity: float) -> float:
+    def roll_rate(self, current_roll_velocity: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         roll_error = -current_roll_velocity
@@ -49,7 +49,7 @@ class PIDController:
 
         return roll_command
     
-    def pitch(self, current_pitch_velocity: float) -> float:
+    def pitch_rate(self, current_pitch_velocity: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         pitch_error = -current_pitch_velocity
@@ -139,14 +139,14 @@ class Drone:
         rospy.init_node('quadrotor_pid', anonymous=True)
 
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
-        self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
+        #self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
 
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
         self.target_pub = rospy.Publisher('/target_point', Point, queue_size=10)
 
         self.current_position = Point()
         self.current_attitude = np.zeros(3)
-        self.current_angular_velocity = Vector3()
+        self.current_velocity = Twist()
 
         self.target_point = Point(4.0, 3.0, 5.0)
         self.target_heading = 0.0
@@ -157,12 +157,22 @@ class Drone:
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
     def imu_callback(self, data: Imu):
-        self.current_angular_velocity = data.angular_velocity
+        self.current_velocity.angular = data.angular_velocity
+
+        quat = [
+            data.orientation.x,
+            data.orientation.y,
+            data.orientation.z,
+            data.orientation.w
+        ]
         
-        #rospy.loginfo(f"Current pitch velocity: {self.current_angular_velocity.x:2f}")
-        #rospy.loginfo(f"Current roll velocity: {self.current_angular_velocity.y:2f}")
+        self.current_attitude = euler_from_quaternion(quat)
+
+        #rospy.loginfo(f"Current roll velocity: {self.current_velocity.angular.x:.2f}")
+        #rospy.loginfo(f"Current pitch velocity: {self.current_velocity.angular.y:.2f}")
 
     def odom_callback(self, data: Odometry):
+        self.current_velocity = data.twist.twist
         self.current_position = data.pose.pose.position
 
         quat = [data.pose.pose.orientation.x,
@@ -174,6 +184,8 @@ class Drone:
 
         #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
+        #rospy.loginfo(f"Current orientation about x axis (roll): {self.current_attitude[0]:.2f}")
+        #rospy.loginfo(f"Current orientation about y axis (pitch): {self.current_attitude[1]:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def fly(self, event):
@@ -184,9 +196,9 @@ class Drone:
 
         self.command.torque.z = self.controller.yaw(self.current_attitude[2])
 
-        # Stabilize pitch and roll using rate controllers
-        self.command.torque.x = self.controller.pitch(self.current_angular_velocity.x)
-        self.command.torque.y = self.controller.roll(self.current_angular_velocity.y)
+        # Stabilize roll and pitch using rate controllers
+        self.command.torque.x = self.controller.roll_rate(self.current_velocity.angular.x)
+        self.command.torque.y = self.controller.pitch_rate(self.current_velocity.angular.y)
 
         self.cmd_pub.publish(self.command)
         self.target_pub.publish(self.target_point)
