@@ -165,6 +165,7 @@ class Drone:
         # State machine
         self.mission_state = MissionState.TAKEOFF
         self.set_state_target()
+        rospy.logwarn(f"Mission state: {self.mission_state.value}")
         self.state_start_time = rospy.Time.now()
 
         self.state_transitions = {
@@ -201,7 +202,7 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
@@ -226,6 +227,7 @@ class Drone:
     
     def update_mission_state(self):
         if self.mission_state == MissionState.LANDED:
+            rospy.logwarn_once(f"Landed at x={self.current_position.x:.2f}, y={self.current_position.y:.2f}")
             return
         
         condition, next_state = self.state_transitions[self.mission_state]
