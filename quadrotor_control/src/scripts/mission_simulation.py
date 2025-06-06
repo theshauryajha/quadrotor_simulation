@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
 import rospy
-from math import sqrt
 import numpy as np
 from enum import Enum
 from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Point, Twist, Wrench, Vector3
+from geometry_msgs.msg import Point, Twist, Wrench
 from tf.transformations import euler_from_quaternion
 
 CLR = "\033[95m"
@@ -23,8 +22,9 @@ class MissionState(Enum):
 
 
 class Controller:
-    def __init__(self, target_point: Point):
+    def __init__(self, target_point: Point, target_heading: float = 0.0):
         self.target_point = target_point
+        self.target_heading = target_heading
 
         self.prev_height_error = 0.0
         self.height_error_integral = 0.0
@@ -40,6 +40,9 @@ class Controller:
 
         self.prev_pitch_error = 0.0
         self.pitch_error_integral = 0.0
+
+        self.prev_heading_error = 0.0
+        self.heading_error_integral = 0.0
 
         self.dt = 0.01 # 10ms / iteration
 
@@ -120,6 +123,23 @@ class Controller:
         self.prev_pitch_error = pitch_error
 
         return pitch_command
+    
+    def yaw(self, current_heading: float) -> float:
+        Kp, Ki, Kd = 1.0, 0.0, 0.0
+
+        heading_error = self.target_heading - current_heading
+        heading_error = self.normalize_angle(heading_error)
+
+        heading_error_derivative = (heading_error - self.prev_heading_error) / self.dt
+        self.heading_error_integral += heading_error * self.dt
+
+        yaw_command = (Kp * heading_error +
+                       Kd * heading_error_derivative +
+                       Ki * self.heading_error_integral)
+        
+        self.prev_heading_error = heading_error
+
+        return yaw_command
 
     def normalize_angle(self, angle: float) -> float:
         while angle < -np.pi:
@@ -154,6 +174,7 @@ class Drone:
         # Mission parameters
         self.operating_altitude = 5.0
         self.target_position = Point(4.0, 3.0, self.operating_altitude)
+        self.target_heading = np.pi / 2
         self.hover_duration = 5.0
 
         # State variables
@@ -162,7 +183,7 @@ class Drone:
         self.current_velocity = Twist()
 
         # Controller
-        self.controller = Controller(self.target_position)
+        self.controller = Controller(self.target_position, self.target_heading)
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
         # State machine
@@ -283,6 +304,9 @@ class Drone:
         # Stabilize pitch and roll using rate controllers
         self.command.torque.x = self.controller.pitch(self.current_velocity.angular.x)
         self.command.torque.y = self.controller.roll(self.current_velocity.angular.y)
+
+        # Heading controller
+        self.command.torque.z = self.controller.yaw(self.current_attitude[2])
 
         #self.motor_pub.publish(self.motor_msg)
         self.cmd_pub.publish(self.command)
