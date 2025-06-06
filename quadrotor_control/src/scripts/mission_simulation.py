@@ -7,7 +7,7 @@ from enum import Enum
 from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Point, Wrench, Vector3
+from geometry_msgs.msg import Point, Twist, Wrench, Vector3
 from tf.transformations import euler_from_quaternion
 
 
@@ -59,7 +59,7 @@ class Controller:
         return thrust_command
     
     def surge(self, current_x: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 2.9
+        Kp, Ki, Kd = 1.3, 0.001, 3.7
 
         x_error = self.target_point.x - current_x
         x_error_derivative = (x_error - self.prev_x_error) / self.dt
@@ -74,7 +74,7 @@ class Controller:
         return surge_command
     
     def sway(self, current_y: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 2.9
+        Kp, Ki, Kd = 1.3, 0.001, 3.7
 
         y_error = self.target_point.y - current_y
         y_error_derivative = (y_error - self.prev_y_error) / self.dt
@@ -132,7 +132,7 @@ class Drone:
 
         # State Subscribers
         self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
-        self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
+        #self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
         
         # Control Publishers
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
@@ -156,7 +156,7 @@ class Drone:
         # State variables
         self.current_position = Point()
         self.current_attitude = np.zeros(3)
-        self.current_angular_velocity = Vector3()
+        self.current_velocity = Twist()
 
         # Controller
         self.controller = Controller(self.target_position)
@@ -176,12 +176,22 @@ class Drone:
         }
 
     def imu_callback(self, data: Imu):
-        self.current_angular_velocity = data.angular_velocity
+        self.current_velocity.angular = data.angular_velocity
+
+        quat = [
+            data.orientation.x,
+            data.orientation.y,
+            data.orientation.z,
+            data.orientation.w
+        ]
         
-        #rospy.loginfo(f"Current pitch velocity: {self.current_angular_velocity.x:2f}")
-        #rospy.loginfo(f"Current roll velocity: {self.current_angular_velocity.y:2f}")
+        self.current_attitude = euler_from_quaternion(quat)
+
+        #rospy.loginfo(f"Current pitch velocity: {self.current_velocity.angular.x:2f}")
+        #rospy.loginfo(f"Current roll velocity: {self.current_velocity.angular.y:2f}")
 
     def odom_callback(self, data: Odometry):
+        self.current_velocity = data.twist.twist
         self.current_position = data.pose.pose.position
 
         quat = [data.pose.pose.orientation.x,
@@ -191,17 +201,21 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
+        rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def at_operating_altitude(self):
-        return abs(self.target_position.z - self.current_position.z) <= 0.1
+        dz = abs(self.target_position.z - self.current_position.z)
+        vz = self.current_velocity.linear.z
+        return dz <= 0.1 and vz <= 0.1
     
     def at_target_xy(self):
         dx = self.target_position.x - self.current_position.x
         dy = self.target_position.y - self.current_position.y
-        return dx <= 0.05 and dy <= 0.05
+        vx = self.current_velocity.linear.x
+        vy = self.current_velocity.linear.y
+        return dx <= 0.05 and dy <= 0.05 and vx <= 0.01 and vy <= 0.01
     
     def hover_complete(self):
         elapsed_time = rospy.Time.now() - self.state_start_time
@@ -235,7 +249,7 @@ class Drone:
             target = self.target_position
 
         elif self.mission_state == MissionState.HOVER:
-            target = self.target_position
+            target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.DESCEND:
             target = Point(self.target_position.x, self.target_position.y, 0.0)
@@ -262,8 +276,8 @@ class Drone:
             # self.motor_msg.data = [self.base_speed + thrust_command] * 4
 
         # Stabilize pitch and roll using rate controllers
-        self.command.torque.x = self.controller.pitch(self.current_angular_velocity.x)
-        self.command.torque.y = self.controller.roll(self.current_angular_velocity.y)
+        self.command.torque.x = self.controller.pitch(self.current_velocity.angular.x)
+        self.command.torque.y = self.controller.roll(self.current_velocity.angular.y)
 
         #self.motor_pub.publish(self.motor_msg)
         self.cmd_pub.publish(self.command)

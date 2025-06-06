@@ -80,7 +80,7 @@ class PIDController:
         return thrust_command
     
     def surge(self, current_x: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 1.6
+        Kp, Ki, Kd = 1.3, 0.001, 2.3
 
         x_error = self.target_position.x - current_x
         x_error_derivative = (x_error - self.prev_x_error) / self.dt
@@ -95,7 +95,7 @@ class PIDController:
         return surge_command
     
     def sway(self, current_y: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 1.6
+        Kp, Ki, Kd = 1.3, 0.001, 2.3
 
         y_error = self.target_position.y - current_y
         y_error_derivative = (y_error - self.prev_y_error) / self.dt
