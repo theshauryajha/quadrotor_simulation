@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 from enum import Enum
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64, Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point, Twist, Wrench
@@ -125,7 +125,7 @@ class Controller:
         return pitch_command
     
     def yaw(self, current_heading: float) -> float:
-        Kp, Ki, Kd = 1.0, 0.0, 0.0
+        Kp, Ki, Kd = 0.3, 0.0, 0.0
 
         heading_error = self.target_heading - current_heading
         heading_error = self.normalize_angle(heading_error)
@@ -169,12 +169,14 @@ class Drone:
         self.base_speed = 900.0
 
         # Goal Publisher for plotting
-        self.goal_pub = rospy.Publisher('/target_point', Point, queue_size=10)
+        self.target_point_pub = rospy.Publisher('/target_point', Point, queue_size=10)
+        self.target_heading_pub = rospy.Publisher('/target_heading', Float64, queue_size=10)
+        self.current_heading_pub = rospy.Publisher('/current_heading', Float64, queue_size=10)
 
         # Mission parameters
         self.operating_altitude = 5.0
         self.target_position = Point(4.0, 3.0, self.operating_altitude)
-        self.target_heading = np.pi / 2
+        self.target_heading = 0.0
         self.hover_duration = 5.0
 
         # State variables
@@ -310,7 +312,10 @@ class Drone:
 
         #self.motor_pub.publish(self.motor_msg)
         self.cmd_pub.publish(self.command)
-        self.goal_pub.publish(self.target_position)
+
+        self.target_point_pub.publish(self.target_position)
+        self.target_heading_pub.publish(self.target_heading)
+        self.current_heading_pub.publish(self.current_attitude[2])
 
 
 if __name__ == "__main__":
