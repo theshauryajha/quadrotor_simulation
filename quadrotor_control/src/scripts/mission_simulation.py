@@ -10,6 +10,9 @@ from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point, Twist, Wrench, Vector3
 from tf.transformations import euler_from_quaternion
 
+CLR = "\033[95m"
+RESET = "\033[0m"
+
 
 class MissionState(Enum):
     TAKEOFF = "TAKEOFF"
@@ -165,7 +168,7 @@ class Drone:
         # State machine
         self.mission_state = MissionState.TAKEOFF
         self.set_state_target()
-        rospy.logwarn(f"Mission state: {self.mission_state.value}")
+        rospy.loginfo(CLR + f"Mission state: {self.mission_state.value}" + RESET)
         self.state_start_time = rospy.Time.now()
 
         self.state_transitions = {
@@ -227,7 +230,7 @@ class Drone:
     
     def update_mission_state(self):
         if self.mission_state == MissionState.LANDED:
-            rospy.logwarn_once(f"Landed at x={self.current_position.x:.2f}, y={self.current_position.y:.2f}")
+            rospy.loginfo_once(CLR + f"Landed at x={self.current_position.x:.2f}, y={self.current_position.y:.2f}" + RESET)
             return
         
         condition, next_state = self.state_transitions[self.mission_state]
@@ -236,7 +239,7 @@ class Drone:
             self.transition_to_state(next_state)
 
     def transition_to_state(self, next_state):
-        rospy.logwarn(f"Mission state transition: {self.mission_state.value} -> {next_state.value}")
+        rospy.loginfo(CLR + f"Mission state transition: {self.mission_state.value} -> {next_state.value}" + RESET)
 
         self.mission_state = next_state
         self.state_start_time = rospy.Time.now()
@@ -260,7 +263,7 @@ class Drone:
             target = self.current_position
 
         self.controller.update_target(target)
-        #rospy.logwarn(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
+        #rospy.loginfo(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
 
     def fly(self, event):
         self.update_mission_state()
