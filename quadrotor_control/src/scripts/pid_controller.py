@@ -174,11 +174,13 @@ class Drone:
     def odom_callback(self, data: Odometry):
         self.current_velocity = data.twist.twist
         self.current_position = data.pose.pose.position
-
-        quat = [data.pose.pose.orientation.x,
-                data.pose.pose.orientation.y,
-                data.pose.pose.orientation.z,
-                data.pose.pose.orientation.w]
+        
+        quat = [
+            data.pose.pose.orientation.x,
+            data.pose.pose.orientation.y,
+            data.pose.pose.orientation.z,
+            data.pose.pose.orientation.w,
+        ]
         
         self.current_attitude = euler_from_quaternion(quat)
 

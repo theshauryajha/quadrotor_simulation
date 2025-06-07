@@ -94,7 +94,7 @@ class Controller:
         
         return sway_command
 
-    def roll(self, current_roll_velocity: float) -> float:
+    def roll_rate(self, current_roll_velocity: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         roll_error = -current_roll_velocity
@@ -109,7 +109,7 @@ class Controller:
 
         return roll_command
     
-    def pitch(self, current_pitch_velocity: float) -> float:
+    def pitch_rate(self, current_pitch_velocity: float) -> float:
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         pitch_error = -current_pitch_velocity
@@ -214,22 +214,26 @@ class Drone:
         
         self.current_attitude = euler_from_quaternion(quat)
 
-        #rospy.loginfo(f"Current pitch velocity: {self.current_velocity.angular.x:2f}")
-        #rospy.loginfo(f"Current roll velocity: {self.current_velocity.angular.y:2f}")
+        #rospy.loginfo(f"Current roll velocity: {self.current_velocity.angular.x:.2f}")
+        #rospy.loginfo(f"Current pitch velocity: {self.current_velocity.angular.y:.2f}")
 
     def odom_callback(self, data: Odometry):
         self.current_velocity = data.twist.twist
         self.current_position = data.pose.pose.position
-
-        quat = [data.pose.pose.orientation.x,
-                data.pose.pose.orientation.y,
-                data.pose.pose.orientation.z,
-                data.pose.pose.orientation.w]
+        
+        quat = [
+            data.pose.pose.orientation.x,
+            data.pose.pose.orientation.y,
+            data.pose.pose.orientation.z,
+            data.pose.pose.orientation.w,
+        ]
         
         self.current_attitude = euler_from_quaternion(quat)
 
         #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
+        #rospy.loginfo(f"Current orientation about x axis (roll): {self.current_attitude[0]:.2f}")
+        #rospy.loginfo(f"Current orientation about y axis (pitch): {self.current_attitude[1]:.2f}")
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def at_operating_altitude(self):
@@ -303,9 +307,9 @@ class Drone:
             # thrust_command = self.controller.thrust(self.current_position.z)
             # self.motor_msg.data = [self.base_speed + thrust_command] * 4
 
-        # Stabilize pitch and roll using rate controllers
-        self.command.torque.x = self.controller.pitch(self.current_velocity.angular.x)
-        self.command.torque.y = self.controller.roll(self.current_velocity.angular.y)
+        # Stabilize roll and pitch using rate controllers
+        self.command.torque.x = self.controller.roll_rate(self.current_velocity.angular.x)
+        self.command.torque.y = self.controller.pitch_rate(self.current_velocity.angular.y)
 
         # Heading controller
         self.command.torque.z = self.controller.yaw(self.current_attitude[2])
