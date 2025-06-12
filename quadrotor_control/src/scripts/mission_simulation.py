@@ -15,8 +15,8 @@ RESET = "\033[0m"
 
 class MissionState(Enum):
     TAKEOFF = "TAKEOFF"
-    HOVER = "HOVER"
     CRUISE = "CRUISE"
+    HOVER = "HOVER"
     DESCEND = "DESCEND"
     LANDED = "LANDED"
 
