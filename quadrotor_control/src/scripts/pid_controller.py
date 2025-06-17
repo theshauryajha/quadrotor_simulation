@@ -138,8 +138,8 @@ class Drone:
     def __init__(self):
         rospy.init_node('quadrotor_pid', anonymous=True)
 
-        self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
-        #self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
+        self.odom_sub = rospy.Subscriber('/quadrotor/ground_truth', Odometry, self.odom_callback)
+        #self.imu_sub = rospy.Subscriber('/quadrotor/imu', Imu, self.imu_callback)
 
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
         self.target_pub = rospy.Publisher('/target_point', Point, queue_size=10)

@@ -154,8 +154,8 @@ class Drone:
         rospy.init_node('mission_sim', anonymous=True)
 
         # State Subscribers
-        self.odom_sub = rospy.Subscriber('/ground_truth/state', Odometry, self.odom_callback)
-        #self.imu_sub = rospy.Subscriber('/imu', Imu, self.imu_callback)
+        self.odom_sub = rospy.Subscriber('/quadrotor/ground_truth', Odometry, self.odom_callback)
+        #self.imu_sub = rospy.Subscriber('/quadrotor/imu', Imu, self.imu_callback)
         
         # Control Publishers
         self.cmd_pub = rospy.Publisher('/quadrotor/cmd_force', Wrench, queue_size=10)
