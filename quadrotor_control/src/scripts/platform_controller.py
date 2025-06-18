@@ -2,7 +2,7 @@
 
 import rospy
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Point, Twist
+from geometry_msgs.msg import Point, Wrench
 
 
 class PlatformController:
@@ -10,17 +10,17 @@ class PlatformController:
         rospy.init_node('platform_controller', anonymous=True)
 
         self.odom_sub = rospy.Subscriber('/platform/odom', Odometry, self.odom_callback)
-        self.cmd_pub = rospy.Publisher('/platform/cmd_vel', Twist, queue_size=10)
+        self.cmd_pub = rospy.Publisher('/platform/cmd_force', Wrench, queue_size=10)
 
         self.current_position = Point()
-        self.command = Twist()
+        self.command = Wrench()
 
     def odom_callback(self, data):
         self.current_position = data.pose.pose.position
 
     def move(self):
-        self.command.linear.x = 2.0
-        self.command.linear.y = 2.0
+        self.command.force.x = 2.0
+        self.command.force.y = 2.0
 
         self.cmd_pub.publish(self.command)
 
