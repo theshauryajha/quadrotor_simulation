@@ -23,13 +23,25 @@
   <!-- Launch argument for rqt_multiplot configuration -->
   <arg name="plot_config" default="" />
 
+  <!-- Launch arguments for platform spawn position -->
+  <arg name="platform_x" default="1.0" />
+  <arg name="platform_y" default="1.0" />
+
   <!-- Spawn the quadrotor in Gazebo -->
   <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
         args="-param robot_description -urdf -model quadrotor -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)" 
         respawn="false" output="screen"/>
 
+  <!-- Spawn the moving platform in Gazebo -->
+  <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model" 
+        args="-sdf -model moving_platform -file $(find quadrotor_description)/models/moving_platform/model.sdf -x $(arg platform_x) -y $(arg platform_y) -z 0.0" 
+        respawn="false" output="screen"/>
+
   <!-- Start the mission simulation -->
   <node name="mission_sim" pkg="quadrotor_control" type="mission_simulation.py" output="screen"></node>
+
+  <!-- Start the platform controller node -->
+  <node name="platform_controller" pkg="quadrotor_control" type="platform_controller.py" output="screen"></node>
 
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->

@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="moving_platform">
+    <pose>0 0 0.25 0 0 0</pose>
+    <static>false</static>
+    
+    <!-- Platform base -->
+    <link name="platform_base">
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <mass>50.0</mass>
+        <inertia>
+          <ixx>16.67</ixx>
+          <iyy>16.67</iyy>
+          <izz>33.33</izz>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyz>0</iyz>
+        </inertia>
+      </inertial>
+      
+      <!-- Platform collision -->
+      <collision name="platform_collision">
+        <geometry>
+          <box>
+            <size>2.0 2.0 0.5</size>
+          </box>
+        </geometry>
+      </collision>
+      
+      <!-- Platform visual -->
+      <visual name="platform_visual">
+        <geometry>
+          <box>
+            <size>2.0 2.0 0.5</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.3 0.3 0.3 1</ambient>
+          <diffuse>0.3 0.3 0.3 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+      
+      <!-- ArUco marker visual on top surface -->
+      <visual name="aruco_marker">
+        <pose>0 0 0.251 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.5 1.5 0.001</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://moving_platform/materials/scripts</uri>
+            <uri>model://moving_platform/materials/textures</uri>
+            <name>ArUcoMarker</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+    
+    <!-- Planar move plugin for control -->
+    <plugin name="planar_move" filename="libgazebo_ros_planar_move.so">
+      <commandTopic>platform/cmd_vel</commandTopic>
+      <odometryTopic>platform/odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>platform_base</robotBaseFrame>
+      <odometryRate>20.0</odometryRate>
+      <publishTF>true</publishTF>
+    </plugin>
+    
+    <!-- GPS plugin -->
+    <plugin name="gps_plugin" filename="libgazebo_ros_gps_sensor.so">
+      <robotNamespace>/platform</robotNamespace>
+      <topicName>gps/fix</topicName>
+      <velocityTopicName>gps/fix_velocity</velocityTopicName>
+      <referenceLatitude>49.9</referenceLatitude>
+      <referenceLongitude>8.9</referenceLongitude>
+      <referenceHeading>0</referenceHeading>
+      <referenceAltitude>0</referenceAltitude>
+      <drift>0.0001 0.0001 0.0001</drift>
+    </plugin>
+  </model>
+</sdf>
