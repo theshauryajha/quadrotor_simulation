@@ -7,7 +7,7 @@
   </gazebo>
 
   <gazebo reference="marker_link">
-    <material>Gazebo/White</material>
+    <material>Gazebo/Wood</material>
   </gazebo>
 
   <gazebo reference="gps_link">
