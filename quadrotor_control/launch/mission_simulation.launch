@@ -14,6 +14,10 @@
   <param name="robot_description" 
          command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/urdf/quadrotor/quadrotor_main.xacro'" />
 
+  <!-- Load the landing platform URDF into the parameter server -->
+  <param name="platform_description" 
+         command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/urdf/platform/platform_main.xacro'" />
+
   <!-- Launch arguments for spawn position and orientation -->
   <arg name="x" default="0.0" />
   <arg name="y" default="0.0" />
@@ -26,6 +30,11 @@
   <!-- Spawn the quadrotor in Gazebo -->
   <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
         args="-param robot_description -urdf -model quadrotor -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)" 
+        respawn="false" output="screen"/>
+
+  <!-- Spawn the landing platform in Gazebo -->
+  <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model" 
+        args="-param platform_description -urdf -model platform -x 2.0 -y 2.0 -z 0.25" 
         respawn="false" output="screen"/>
 
   <!-- Start the mission simulation -->
