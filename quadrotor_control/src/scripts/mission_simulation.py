@@ -198,7 +198,7 @@ class Drone:
             MissionState.TAKEOFF: (self.at_operating_altitude, MissionState.CRUISE),
             MissionState.CRUISE: (self.at_target_xy, MissionState.HOVER),
             MissionState.HOVER: (self.hover_complete, MissionState.DESCEND),
-            MissionState.DESCEND: (self.at_ground_level, MissionState.LANDED),
+            MissionState.DESCEND: (self.at_platform_level, MissionState.LANDED),
             MissionState.LANDED: (None, None)
         }
 
@@ -252,8 +252,8 @@ class Drone:
         elapsed_time = rospy.Time.now() - self.state_start_time
         return elapsed_time.to_sec() >= self.hover_duration
     
-    def at_ground_level(self):
-        return self.current_position.z <= 0.15
+    def at_platform_level(self):
+        return self.current_position.z <= 0.35
     
     def update_mission_state(self):
         if self.mission_state == MissionState.LANDED:
@@ -284,7 +284,7 @@ class Drone:
             target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.DESCEND:
-            target = Point(self.target_position.x, self.target_position.y, 0.0)
+            target = Point(self.target_position.x, self.target_position.y, 0.2)
         
         elif self.mission_state == MissionState.LANDED:
             target = self.current_position
