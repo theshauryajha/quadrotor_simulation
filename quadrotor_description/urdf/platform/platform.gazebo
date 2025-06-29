@@ -7,7 +7,7 @@
   </gazebo>
 
   <gazebo reference="marker_link">
-    <material>Gazebo/Wood</material>
+    <material>Gazebo/ArUcoMarker</material>
   </gazebo>
 
   <gazebo reference="gps_link">
