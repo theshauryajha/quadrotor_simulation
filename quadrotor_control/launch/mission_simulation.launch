@@ -10,7 +10,7 @@
     <arg name="debug" value="false"/>
   </include>
 
-  <!-- Load the URDF into the parameter server -->
+  <!-- Load the quadrotor URDF into the parameter server -->
   <param name="robot_description" 
          command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/urdf/quadrotor/quadrotor_main.xacro'" />
 
