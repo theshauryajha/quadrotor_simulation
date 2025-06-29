@@ -315,7 +315,7 @@ class Drone:
         self.command.torque.z = self.controller.yaw(self.current_attitude[2])
 
         #self.motor_pub.publish(self.motor_msg)
-        self.cmd_pub.publish(self.command)
+        #self.cmd_pub.publish(self.command)
 
         self.target_point_pub.publish(self.target_position)
         self.target_heading_pub.publish(self.target_heading)

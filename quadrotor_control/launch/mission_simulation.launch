@@ -40,6 +40,9 @@
   <!-- Start the mission simulation -->
   <node name="mission_sim" pkg="quadrotor_control" type="mission_simulation.py" output="screen"></node>
 
+  <!-- Start the platform controller -->
+  <node name="platform_controller" pkg="quadrotor_control" type="platform_controller.py" output="screen"></node>
+
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
 
