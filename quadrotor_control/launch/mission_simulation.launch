@@ -46,6 +46,10 @@
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
 
+  <!-- Start rqt_image_view for bottom camera -->
+  <node name="bottom_camera_viewer" pkg="rqt_image_view" type="rqt_image_view" 
+        args="/bottom_camera/image_raw" output="screen"/>
+
   <!-- Start rqt_multiplot (only if plot_config is specified) -->
   <group if="$(eval arg('plot_config') != '')">
     <node name="rqt_multiplot" pkg="rqt_multiplot" type="rqt_multiplot"
