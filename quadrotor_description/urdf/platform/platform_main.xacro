@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<robot name="platform" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <!-- Include the URDF and Gazebo files -->
-  <xacro:include filename="$(find quadrotor_description)/urdf/platform/platform.urdf.xacro" />
-  <xacro:include filename="$(find quadrotor_description)/urdf/platform/platform.gazebo" />
-</robot>

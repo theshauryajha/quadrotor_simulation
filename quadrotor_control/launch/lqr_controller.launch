@@ -12,7 +12,7 @@
 
   <!-- Load the URDF into the parameter server -->
   <param name="robot_description" 
-         command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/urdf/quadrotor/quadrotor_main.xacro'" />
+         command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/models/quadrotor/quadrotor_main.xacro'" />
 
   <!-- Launch arguments for spawn position and orientation -->
   <arg name="x" default="0.0" />
