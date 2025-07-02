@@ -3,7 +3,7 @@
 
   <!-- Visual appearance -->
   <gazebo reference="base_link">
-    <material>Gazebo/Grey</material>
+    <material>Gazebo/DarkGrey</material>
   </gazebo>
 
   <gazebo reference="marker_link">
@@ -11,7 +11,7 @@
   </gazebo>
 
   <gazebo reference="gps_link">
-    <material>Gazebo/DarkGrey</material>
+    <material>Gazebo/White</material>
   </gazebo>
 
   <!-- Force plugin for platform movement -->
