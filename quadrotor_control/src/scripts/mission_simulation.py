@@ -151,13 +151,16 @@ class Controller:
 
 class Platform:
     def __init__(self):
-        # Platform Position Subscriber
+        # Platform Position Subscriber & Publisher
         self.position_sub = rospy.Subscriber('/platform/ground_truth', Odometry, self.odom_callback)
+        self.position_pub = rospy.Publisher('/target_point', Point, queue_size=10)
+        
         self.position = Point()
         self.height = 0.2
 
     def odom_callback(self, data: Odometry):
         self.position = data.pose.pose.position
+        self.position_pub.publish(self.position)
 
 
 class Drone:
@@ -181,11 +184,6 @@ class Drone:
 
         # Leg length
         self.leg_length = 0.15
-
-        # Goal Publisher for plotting
-        self.target_point_pub = rospy.Publisher('/target_point', Point, queue_size=10)
-        self.target_heading_pub = rospy.Publisher('/target_heading', Float64, queue_size=10)
-        self.current_heading_pub = rospy.Publisher('/current_heading', Float64, queue_size=10)
 
         # Mission parameters
         self.platform = Platform()
@@ -330,10 +328,6 @@ class Drone:
 
         #self.motor_pub.publish(self.motor_msg)
         self.cmd_pub.publish(self.command)
-
-        self.target_point_pub.publish(self.platform.position)
-        self.target_heading_pub.publish(self.target_heading)
-        self.current_heading_pub.publish(self.current_attitude[2])
 
 
 if __name__ == "__main__":
