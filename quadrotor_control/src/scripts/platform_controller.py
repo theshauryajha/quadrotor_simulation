@@ -24,7 +24,7 @@ class PlatformController:
         self.command.force.x = 200.0
         self.command.force.y = 200.0
 
-        self.cmd_pub.publish(self.command)
+        #self.cmd_pub.publish(self.command)
 
 
 if __name__ == "__main__":

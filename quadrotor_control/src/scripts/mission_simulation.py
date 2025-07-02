@@ -149,6 +149,17 @@ class Controller:
         return angle
 
 
+class Platform:
+    def __init__(self):
+        # Platform Position Subscriber
+        self.position_sub = rospy.Subscriber('/platform/ground_truth', Odometry, self.odom_callback)
+        self.position = Point()
+        self.height = 0.2
+
+    def odom_callback(self, data: Odometry):
+        self.position = data.pose.pose.position
+
+
 class Drone:
     def __init__(self):
         rospy.init_node('mission_sim', anonymous=True)
@@ -168,16 +179,19 @@ class Drone:
         # Define base motor speed
         self.base_speed = 900.0
 
+        # Leg length
+        self.leg_length = 0.15
+
         # Goal Publisher for plotting
         self.target_point_pub = rospy.Publisher('/target_point', Point, queue_size=10)
         self.target_heading_pub = rospy.Publisher('/target_heading', Float64, queue_size=10)
         self.current_heading_pub = rospy.Publisher('/current_heading', Float64, queue_size=10)
 
         # Mission parameters
+        self.platform = Platform()
         self.operating_altitude = 5.0
-        self.target_position = Point(4.0, 3.0, self.operating_altitude)
         self.target_heading = 0.0
-        self.hover_duration = 5.0
+        self.hover_duration = 3.0
 
         # State variables
         self.current_position = Point()
@@ -185,7 +199,7 @@ class Drone:
         self.current_velocity = Twist()
 
         # Controller
-        self.controller = Controller(self.target_position, self.target_heading)
+        self.controller = Controller(self.platform.position, self.target_heading)
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
         # State machine
@@ -196,7 +210,7 @@ class Drone:
 
         self.state_transitions = {
             MissionState.TAKEOFF: (self.at_operating_altitude, MissionState.CRUISE),
-            MissionState.CRUISE: (self.at_target_xy, MissionState.HOVER),
+            MissionState.CRUISE: (self.at_platform_xy, MissionState.HOVER),
             MissionState.HOVER: (self.hover_complete, MissionState.DESCEND),
             MissionState.DESCEND: (self.at_platform_level, MissionState.LANDED),
             MissionState.LANDED: (None, None)
@@ -237,13 +251,13 @@ class Drone:
         #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
 
     def at_operating_altitude(self):
-        dz = abs(self.target_position.z - self.current_position.z)
+        dz = abs(self.operating_altitude - self.current_position.z)
         vz = self.current_velocity.linear.z
         return dz <= 0.1 and vz <= 0.1
     
-    def at_target_xy(self):
-        dx = self.target_position.x - self.current_position.x
-        dy = self.target_position.y - self.current_position.y
+    def at_platform_xy(self):
+        dx = self.platform.position.x - self.current_position.x
+        dy = self.platform.position.y - self.current_position.y
         vx = self.current_velocity.linear.x
         vy = self.current_velocity.linear.y
         return dx <= 0.05 and dy <= 0.05 and vx <= 0.05 and vy <= 0.05
@@ -253,7 +267,7 @@ class Drone:
         return elapsed_time.to_sec() >= self.hover_duration
     
     def at_platform_level(self):
-        return self.current_position.z <= 0.35
+        return self.current_position.z <= self.platform.height + self.leg_length
     
     def update_mission_state(self):
         if self.mission_state == MissionState.LANDED:
@@ -278,13 +292,13 @@ class Drone:
             target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.CRUISE:
-            target = self.target_position
+            target = Point(self.platform.position.x, self.platform.position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.HOVER:
             target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.DESCEND:
-            target = Point(self.target_position.x, self.target_position.y, 0.2)
+            target = Point(self.platform.position.x, self.platform.position.y, self.platform.height)
         
         elif self.mission_state == MissionState.LANDED:
             target = self.current_position
@@ -317,7 +331,7 @@ class Drone:
         #self.motor_pub.publish(self.motor_msg)
         self.cmd_pub.publish(self.command)
 
-        self.target_point_pub.publish(self.target_position)
+        self.target_point_pub.publish(self.platform.position)
         self.target_heading_pub.publish(self.target_heading)
         self.current_heading_pub.publish(self.current_attitude[2])
 
