@@ -3,7 +3,7 @@
 import rospy
 import numpy as np
 from enum import Enum
-from std_msgs.msg import Float64, Float64MultiArray
+from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point, Twist, Wrench
