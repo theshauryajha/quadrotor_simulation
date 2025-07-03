@@ -10,7 +10,7 @@ from geometry_msgs.msg import Point, Twist, Wrench
 from tf.transformations import euler_from_quaternion
 
 # Colour for Logging
-PURPLE = "\033[95m"
+CYAN = "\033[96m"
 RESET = "\033[0m"
 
 
@@ -204,7 +204,7 @@ class Drone:
         # State machine
         self.mission_state = MissionState.TAKEOFF
         self.set_state_target()
-        rospy.loginfo(PURPLE + f"Mission state: {self.mission_state.value}" + RESET)
+        rospy.loginfo(CYAN + f"Mission state: {self.mission_state.value}" + RESET)
         self.state_start_time = rospy.Time.now()
 
         self.state_transitions = {
@@ -270,7 +270,7 @@ class Drone:
     
     def update_mission_state(self):
         if self.mission_state == MissionState.LANDED:
-            rospy.loginfo_once(PURPLE + f"Landed at x={self.current_position.x:.2f}, y={self.current_position.y:.2f}" + RESET)
+            rospy.loginfo_once(CYAN + f"Landed at x={self.current_position.x:.2f}, y={self.current_position.y:.2f}" + RESET)
             return
         
         condition, next_state = self.state_transitions[self.mission_state]
@@ -279,7 +279,7 @@ class Drone:
             self.transition_to_state(next_state)
 
     def transition_to_state(self, next_state):
-        rospy.loginfo(PURPLE + f"Mission state transition: {self.mission_state.value} -> {next_state.value}" + RESET)
+        rospy.loginfo(CYAN + f"Mission state transition: {self.mission_state.value} -> {next_state.value}" + RESET)
 
         self.mission_state = next_state
         self.state_start_time = rospy.Time.now()
