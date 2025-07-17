@@ -45,18 +45,20 @@ class Controller:
         self.prev_heading_error = 0.0
         self.heading_error_integral = 0.0
 
+        self.prev_thrust_command = 0.0
         self.prev_surge_command = 0.0
         self.prev_sway_command = 0.0
 
         self.max_cruise_accel = 10.0
+        self.max_descent_accel = 2.5
 
         self.dt = 0.01 # 10ms / iteration
 
     def update_target(self, new_target: Point):
         self.target_point = new_target
 
-    def limit_acceleration(self, current_command: float, prev_command: float):
-            max_change = self.max_cruise_accel * self.dt
+    def limit_acceleration(self, current_command: float, prev_command: float, max_accel: float) -> float:
+            max_change = max_accel * self.dt
             command_change = current_command - prev_command
 
             if abs(command_change) > max_change:
@@ -65,7 +67,7 @@ class Controller:
             else:
                 return command_change
 
-    def thrust(self, current_altitude: float) -> float:
+    def thrust(self, current_altitude: float, is_descending: bool) -> float:
         Kp, Ki, Kd = 5.0, 1.5, 3.5
 
         height_error = self.target_point.z - current_altitude
@@ -76,7 +78,11 @@ class Controller:
                           Kd * height_error_derivative +
                           Ki * self.height_error_integral)
         
+        if is_descending:
+            thrust_command = self.limit_acceleration(thrust_command, self.prev_thrust_command, self.max_descent_accel)
+        
         self.prev_height_error = height_error
+        self.prev_thrust_command = thrust_command
 
         return thrust_command
     
@@ -91,7 +97,7 @@ class Controller:
                          Kd * x_error_derivative +
                          Ki * self.x_error_integral)
         
-        surge_command = self.limit_acceleration(surge_command, self.prev_surge_command)
+        surge_command = self.limit_acceleration(surge_command, self.prev_surge_command, self.max_cruise_accel)
         
         self.prev_x_error = x_error
         self.prev_surge_command = surge_command
@@ -109,7 +115,7 @@ class Controller:
                         Kd * y_error_derivative +
                         Ki * self.y_error_integral)
         
-        sway_command = self.limit_acceleration(sway_command, self.prev_sway_command)
+        sway_command = self.limit_acceleration(sway_command, self.prev_sway_command, self.max_cruise_accel)
         
         self.prev_y_error = y_error
         self.prev_sway_command = sway_command
@@ -190,11 +196,7 @@ class Platform:
 
     def marker_callback(self, data: PoseStamped):
         self.marker_pose = data.pose
-        rospy.loginfo(f"AprilTag 23 detected at position: "
-                            f"x={self.marker_pose.position.x:.3f}, "
-                            f"y={self.marker_pose.position.y:.3f}, "
-                            f"z={self.marker_pose.position.z:.3f}")
-
+        rospy.loginfo_once(CYAN + "AprilTag detected!" + RESET)
 
 class Drone:
     def __init__(self):
@@ -346,7 +348,9 @@ class Drone:
             #self.motor_msg.data = [0.0, 0.0, 0.0, 0.0]
 
         else:
-            self.command.force.z = self.controller.thrust(self.current_position.z)
+            is_descending = (self.mission_state == MissionState.DESCEND)
+
+            self.command.force.z = self.controller.thrust(self.current_position.z, is_descending)
             self.command.force.x = self.controller.surge(self.current_position.x)
             self.command.force.y = self.controller.sway(self.current_position.y)
             # thrust_command = self.controller.thrust(self.current_position.z)
