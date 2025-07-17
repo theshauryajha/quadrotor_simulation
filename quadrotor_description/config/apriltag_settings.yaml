@@ -1,0 +1,23 @@
+# AprilTag detection settings
+tag_family: 'tag36h11'
+tag_border: 1
+tag_threads: 4
+tag_decimate: 1.0
+tag_blur: 0.0
+tag_refine_edges: 1
+tag_refine_decode: 0
+tag_refine_pose: 0
+tag_debug: 0
+publish_tf: true
+
+# Camera parameters for pose estimation
+camera_frame: bottom_camera_link
+publish_tag_detections_image: true
+
+# Tag size in meters (0.8m for your 512x512 pixel tag)
+tag_size: 0.8  # 80cm tag size
+
+# Specific tag configurations
+standalone_tags:
+  - id: 23
+    size: 0.8  # Size in meters

@@ -38,10 +38,13 @@
         respawn="false" output="screen"/>
 
   <!-- Start the mission simulation -->
-  <node name="mission_sim" pkg="quadrotor_control" type="mission_simulation.py" output="screen"></node>
+  <node name="mission_sim" pkg="quadrotor_control" type="mission_simulation.py" output="screen"/>
 
   <!-- Start the platform controller -->
-  <node name="platform_controller" pkg="quadrotor_control" type="platform_controller.py" output="screen"></node>
+  <node name="platform_controller" pkg="quadrotor_control" type="platform_controller.py" output="screen"/>
+
+  <!-- Start AprilTag detection -->
+  <include file="$(find quadrotor_control)/launch/apriltag_detection.launch"/>
 
   <!-- Start RViz for visualization -->
   <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find quadrotor_description)/rviz/quadrotor.rviz" /> -->
