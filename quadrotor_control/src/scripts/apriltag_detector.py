@@ -5,7 +5,7 @@ from geometry_msgs.msg import PoseStamped
 from apriltag_ros.msg import AprilTagDetectionArray
 
 # Colour for Logging
-MAGENTA = "\033[95m"
+CYAN = "\033[96m"
 RESET = "\033[0m"
 
 
@@ -19,7 +19,7 @@ class AprilTagDetector:
         # Publisher for tag pose (ID 23 specifically)
         self.pose_pub = rospy.Publisher('/apriltag/pose', PoseStamped, queue_size=10)
         
-        rospy.loginfo(MAGENTA + "AprilTag detector node started - looking for tag ID 23" + RESET)
+        rospy.loginfo(CYAN + "AprilTag detector node started - looking for tag ID 23" + RESET)
         
     def tag_callback(self, data):
         """Process AprilTag detections and publish pose for tag ID 23"""
