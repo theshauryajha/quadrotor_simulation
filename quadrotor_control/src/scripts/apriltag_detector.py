@@ -4,6 +4,11 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from apriltag_ros.msg import AprilTagDetectionArray
 
+# Colour for Logging
+MAGENTA = "\033[95m"
+RESET = "\033[0m"
+
+
 class AprilTagDetector:
     def __init__(self):
         rospy.init_node('apriltag_detector', anonymous=True)
@@ -12,9 +17,9 @@ class AprilTagDetector:
         self.tag_sub = rospy.Subscriber('/tag_detections', AprilTagDetectionArray, self.tag_callback)
         
         # Publisher for tag pose (ID 23 specifically)
-        self.pose_pub = rospy.Publisher('/apriltag_23/pose', PoseStamped, queue_size=10)
+        self.pose_pub = rospy.Publisher('/apriltag/pose', PoseStamped, queue_size=10)
         
-        rospy.loginfo("AprilTag detector node started - looking for tag ID 23")
+        rospy.loginfo(MAGENTA + "AprilTag detector node started - looking for tag ID 23" + RESET)
         
     def tag_callback(self, data):
         """Process AprilTag detections and publish pose for tag ID 23"""
@@ -33,6 +38,7 @@ class AprilTagDetector:
                             f"x={pose_msg.pose.position.x:.3f}, "
                             f"y={pose_msg.pose.position.y:.3f}, "
                             f"z={pose_msg.pose.position.z:.3f}")
+                
 
 if __name__ == '__main__':
     try:
