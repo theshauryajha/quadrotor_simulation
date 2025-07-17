@@ -31,6 +31,9 @@ class AprilTagDetector:
                 pose_msg.header = data.header
                 pose_msg.pose = detection.pose.pose.pose
                 
+                 # Convention issue
+                pose_msg.pose.position.x *= -1
+                
                 # Publish the pose
                 self.pose_pub.publish(pose_msg)
 
