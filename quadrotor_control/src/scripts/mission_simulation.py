@@ -186,6 +186,7 @@ class Platform:
         # Fiducial Marker Pose Subscriber
         self.marker_sub = rospy.Subscriber('/apriltag/pose', PoseStamped, self.marker_callback)
         self.marker_pose = Pose()
+        self.maker_pose_detected = False
         
         self.position = Point()
         self.height = 0.2
@@ -196,6 +197,7 @@ class Platform:
 
     def marker_callback(self, data: PoseStamped):
         self.marker_pose = data.pose
+        self.maker_pose_detected = True
         rospy.loginfo_once(CYAN + "AprilTag detected!" + RESET)
 
 class Drone:

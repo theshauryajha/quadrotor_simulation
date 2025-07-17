@@ -33,6 +33,11 @@ class AprilTagDetector:
                 
                 # Publish the pose
                 self.pose_pub.publish(pose_msg)
+
+                rospy.loginfo(f"AprilTag 23 detected at position: "
+                            f"x={pose_msg.pose.position.x:.3f}, "
+                            f"y={pose_msg.pose.position.y:.3f}, "
+                            f"z={pose_msg.pose.position.z:.3f}")
                 
 
 if __name__ == '__main__':

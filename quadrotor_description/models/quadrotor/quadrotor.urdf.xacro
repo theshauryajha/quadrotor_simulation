@@ -224,7 +224,7 @@
   <joint name="bottom_camera_joint" type="fixed">
     <parent link="base_link"/>
     <child link="bottom_camera_link"/>
-    <origin xyz="0 0 -${body_height/2 + 0.01}" rpy="0 ${pi/2} 0"/>
+    <origin xyz="0 0 -${body_height/2 + 0.01}" rpy="0 ${pi/2} ${pi/2}"/>
   </joint>
   
   <!-- IMU Link -->
