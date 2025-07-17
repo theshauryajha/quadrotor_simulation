@@ -6,7 +6,7 @@ from enum import Enum
 from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import PoseStamped, Pose, Point, Twist, Wrench
+from geometry_msgs.msg import Point, Twist, Wrench
 from tf.transformations import euler_from_quaternion
 
 # Colour for Logging
