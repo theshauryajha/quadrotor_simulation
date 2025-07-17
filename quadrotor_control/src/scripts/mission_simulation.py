@@ -155,10 +155,6 @@ class Platform:
         # Platform Position Subscriber & Publisher
         self.position_sub = rospy.Subscriber('/platform/ground_truth', Odometry, self.odom_callback)
         self.position_pub = rospy.Publisher('/target_point', Point, queue_size=10)
-
-        # Fiducial Marker Pose Subscriber
-        self.marker_sub = rospy.Subscriber('/apriltag_pose', PoseStamped, self.marker_callback)
-        self.marker_pose = Pose()
         
         self.position = Point()
         self.height = 0.2
