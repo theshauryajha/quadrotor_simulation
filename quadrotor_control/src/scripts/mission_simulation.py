@@ -6,7 +6,7 @@ from enum import Enum
 from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Point, Twist, Wrench
+from geometry_msgs.msg import PoseStamped, Pose, Point, Twist, Wrench
 from tf.transformations import euler_from_quaternion
 
 # Colour for Logging
@@ -155,6 +155,10 @@ class Platform:
         # Platform Position Subscriber & Publisher
         self.position_sub = rospy.Subscriber('/platform/ground_truth', Odometry, self.odom_callback)
         self.position_pub = rospy.Publisher('/target_point', Point, queue_size=10)
+
+        # Fiducial Marker Pose Subscriber
+        self.marker_sub = rospy.Subscriber('/apriltag/pose', PoseStamped, self.marker_callback)
+        self.marker_pose = Pose()
         
         self.position = Point()
         self.height = 0.2
@@ -162,6 +166,13 @@ class Platform:
     def odom_callback(self, data: Odometry):
         self.position = data.pose.pose.position
         self.position_pub.publish(self.position)
+
+    def marker_callback(self, data: PoseStamped):
+        self.marker_pose = data.pose
+        rospy.loginfo(f"AprilTag 23 detected at position: "
+                            f"x={self.marker_pose.position.x:.3f}, "
+                            f"y={self.marker_pose.position.y:.3f}, "
+                            f"z={self.marker_pose.position.z:.3f}")
 
 
 class Drone:
@@ -188,7 +199,7 @@ class Drone:
 
         # Mission parameters
         self.platform = Platform()
-        self.operating_altitude = 3.0
+        self.operating_altitude = 5.0
         self.target_heading = 0.0
         self.hover_duration = 3.0
 
