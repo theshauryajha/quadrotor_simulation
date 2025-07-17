@@ -45,10 +45,25 @@ class Controller:
         self.prev_heading_error = 0.0
         self.heading_error_integral = 0.0
 
+        self.prev_surge_command = 0.0
+        self.prev_sway_command = 0.0
+
+        self.max_cruise_accel = 10.0
+
         self.dt = 0.01 # 10ms / iteration
 
     def update_target(self, new_target: Point):
         self.target_point = new_target
+
+    def limit_acceleration(self, current_command: float, prev_command: float):
+            max_change = self.max_cruise_accel * self.dt
+            command_change = current_command - prev_command
+
+            if abs(command_change) > max_change:
+                limited_change = max_change if command_change > 0 else -max_change
+                return prev_command + limited_change
+            else:
+                return command_change
 
     def thrust(self, current_altitude: float) -> float:
         Kp, Ki, Kd = 5.0, 1.5, 3.5
@@ -76,7 +91,10 @@ class Controller:
                          Kd * x_error_derivative +
                          Ki * self.x_error_integral)
         
+        surge_command = self.limit_acceleration(surge_command, self.prev_surge_command)
+        
         self.prev_x_error = x_error
+        self.prev_surge_command = surge_command
 
         return surge_command
     
@@ -91,7 +109,10 @@ class Controller:
                         Kd * y_error_derivative +
                         Ki * self.y_error_integral)
         
+        sway_command = self.limit_acceleration(sway_command, self.prev_sway_command)
+        
         self.prev_y_error = y_error
+        self.prev_sway_command = sway_command
         
         return sway_command
 
