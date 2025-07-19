@@ -186,6 +186,7 @@ class Platform:
         # Fiducial Marker Pose Subscriber
         self.marker_sub = rospy.Subscriber('/apriltag/pose', PoseStamped, self.marker_callback)
         self.marker_pose = Pose()
+        self.marker_heading = 0.0
         self.marker_pose_detected = False
         
         self.position = Point()
@@ -239,7 +240,6 @@ class Drone:
         # Mission parameters
         self.platform = Platform()
         self.operating_altitude = 5.0
-        self.target_heading = 0.0
         self.hover_duration = 3.0
 
         # State variables
@@ -248,7 +248,7 @@ class Drone:
         self.current_velocity = Twist()
 
         # Controller
-        self.controller = Controller(self.platform.position, self.target_heading)
+        self.controller = Controller(self.platform.position)
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
         # State machine
