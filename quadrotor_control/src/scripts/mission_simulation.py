@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import rospy
 import numpy as np
@@ -15,6 +16,25 @@ RESET = "\033[0m"
 
 
 class MissionState(Enum):
+    """
+    Enumeration of mission phases for drone operation.
+
+    This state machine define the various stages of the drone's mission,
+    from takeoff to landing. Each state corresponds to a distinct behaviour
+    mode and setpoint for the control logic.
+
+    States:
+        TAKEOFF:    Drone ascends to the operating altitude at its current
+                    position.
+        CRUISE:     Drone moves laterally towards the position of the landing
+                    platform, until the camera detects a fiducial marker.
+        TRACK:      Drone tracks the fiducial marker detected by its camera.
+        HOVER:      Drone hovers over the landing platform for 2 seconds.
+        ROTATE:     Drone rotates to align itself with the fiducial marker.
+        DESCEND:    Drone descendes towards the fiducial marker.
+        LANDED:     Drone has successfully landed on the platform.
+    """
+
     TAKEOFF = "TAKEOFF"
     CRUISE = "CRUISE"
     TRACK = "TRACK"
@@ -25,7 +45,53 @@ class MissionState(Enum):
 
 
 class Controller:
+    """
+    A PID Controller class with methods to compute control outputs for each of
+    the 6 Degrees of Freedom with independent gain coefficients.
+
+    Attributes:
+        target_point (Point): The target position in 3D space
+        target_heading (float): The desired yaw angle in radians
+
+        prev_*_error (float): Previous cycle error values for derivative control
+        *_error_integral (float): Accumulated error values for integral control
+
+        prev_*_command (float): Previous command outputs to limit acceleration
+
+        max_*_accel (float): Acceleration limits for smoother control
+
+        dt (float): Time step between control uodates (seconds)
+
+    Methods:
+        update_target_*(new_target_*):
+            Update Drone's target parameters
+        limit_acceleration(current_command, prev_command, max_accel):
+            Clamp commanded changes to respect acceleration limits.
+        thrust(current_altitude, is_descending):
+            Compute vertical thrust command
+        surge(current_x):
+            Compute forward (body x-direction) motion command
+        sway(current_y):
+            Compute lateral (body y-direction) motion command
+        roll_rate(current_roll_velocity):
+            Stabilize roll by minimizing angular velocity about body x-axis
+        pitch_rate(current_pitch_velocity):
+            Stabilize pitch by minimizing angular velocity about body y-axis
+        yaw(current_heading):
+            Compute rotational (about body z-axis) motion command
+        normalize_angle(angle):
+            Normalize any angle to the range [-pi, pi]        
+    """
+
     def __init__(self, target_point: Point, target_heading: float = 0.0):
+        """
+        Initialize the 6-DOF PID Controller with a target point and heading.
+        
+        Args:
+            target_point(Point): The target position in 3D space
+            target_heading(float): The desired yaw angle in radians
+        """
+
         self.target_point = target_point
         self.target_heading = target_heading
 
@@ -59,22 +125,61 @@ class Controller:
         self.dt = 0.01 # 10ms / iteration
 
     def update_target_position(self, new_target_point: Point):
+        """
+        Update the controller's 3D position setpoint.
+
+        Args:
+            new_target_point(Point): New target position in 3D space
+        """
+
         self.target_point = new_target_point
 
     def update_target_heading(self, new_target_heading: float):
+        """
+        Update the controller's heading setpoint.
+
+        Args:
+            new_target_heading(float): New target yaw angle in radians
+        """
+
         self.target_heading = new_target_heading
 
     def limit_acceleration(self, current_command: float, prev_command: float, max_accel: float) -> float:
-            max_change = max_accel * self.dt
-            command_change = current_command - prev_command
+        """
+        Clamp commanded changes to respect acceleration limits.
 
-            if abs(command_change) > max_change:
-                limited_change = max_change if command_change > 0 else -max_change
-                return prev_command + limited_change
-            else:
-                return command_change
+        Args:
+            current_command(float): Computed control output for the current
+                                    iteration
+            prev_command(float): Previously computed control output
+            max_accel(float): Limit on acceleration
+
+        Returns:
+            float: Adjusted command limited by acceleration constraints
+        """
+        
+        max_change = max_accel * self.dt
+        command_change = current_command - prev_command
+
+        if abs(command_change) > max_change:
+            limited_change = max_change if command_change > 0 else -max_change
+            return prev_command + limited_change
+        else:
+            return command_change
 
     def thrust(self, current_altitude: float, is_descending: bool) -> float:
+        """
+        Compute PID Control command for vertical thrust, and limit acceleration
+        during descent.
+
+        Args:
+            current_altitude(float): Drone's current altitude
+            is_descending(bool): Flag to apply acceleration limit
+        
+        Returns:
+            float: Computed PID Control command for vertical thrust
+        """
+
         Kp, Ki, Kd = 5.0, 1.5, 3.5
 
         height_error = self.target_point.z - current_altitude
@@ -94,6 +199,16 @@ class Controller:
         return thrust_command
     
     def surge(self, current_x: float) -> float:
+        """
+        Compute PID Control command for forward (body x-direction).
+
+        Args:
+            current_x(float): Drone's current x-coordinate in the world frame
+        
+        Returns:
+            float: Computed PID Control command for forward motion
+        """
+
         Kp, Ki, Kd = 1.3, 0.001, 4.3
 
         x_error = self.target_point.x - current_x
@@ -112,6 +227,16 @@ class Controller:
         return surge_command
     
     def sway(self, current_y: float) -> float:
+        """
+        Compute PID Control command for lateral (body y-direction).
+
+        Args:
+            current_y(float): Drone's current y-coordinate in the world frame
+        
+        Returns:
+            float: Computed PID Control command for lateral motion
+        """
+
         Kp, Ki, Kd = 1.3, 0.001, 4.3
 
         y_error = self.target_point.y - current_y
@@ -130,6 +255,17 @@ class Controller:
         return sway_command
 
     def roll_rate(self, current_roll_velocity: float) -> float:
+        """
+        Rate controller to stabilize roll.
+
+        Args:
+            current_roll_velocity(float):   Current angular velocity about body
+                                            x-axis
+        
+        Returns:
+            float: Computed PID Control command for roll motion
+        """
+
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         roll_error = -current_roll_velocity
@@ -145,6 +281,17 @@ class Controller:
         return roll_command
     
     def pitch_rate(self, current_pitch_velocity: float) -> float:
+        """
+        Rate controller to stabilize pitch.
+
+        Args:
+            current_pitch_velocity(float):  Current angular velocity about body
+                                            y-axis
+        
+        Returns:
+            float: Computed PID Control command for pitch motion
+        """
+        
         Kp, Ki, Kd = 1.0, 0.0, 0.0
 
         pitch_error = -current_pitch_velocity
@@ -160,6 +307,16 @@ class Controller:
         return pitch_command
     
     def yaw(self, current_heading: float) -> float:
+        """
+        Compute PID Control command for rotational (about body z-axis) motion.
+
+        Args:
+            current_heading(float): Drone's current heading in world frame
+        
+        Returns:
+            float: Computed PID Control command for rotational (yaw) motion
+        """
+        
         Kp, Ki, Kd = 0.3, 0.001, 0.7
 
         heading_error = self.target_heading - current_heading
