@@ -52,7 +52,7 @@ class Controller:
         self.prev_sway_command = 0.0
 
         self.max_cruise_accel = 10.0
-        self.max_descent_accel = 2.5
+        self.max_descent_accel = 2.0
 
         self.dt = 0.01 # 10ms / iteration
 
@@ -90,7 +90,7 @@ class Controller:
         return thrust_command
     
     def surge(self, current_x: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 3.7
+        Kp, Ki, Kd = 1.3, 0.001, 4.3
 
         x_error = self.target_point.x - current_x
         x_error_derivative = (x_error - self.prev_x_error) / self.dt
@@ -108,7 +108,7 @@ class Controller:
         return surge_command
     
     def sway(self, current_y: float) -> float:
-        Kp, Ki, Kd = 1.3, 0.001, 3.7
+        Kp, Ki, Kd = 1.3, 0.001, 4.3
 
         y_error = self.target_point.y - current_y
         y_error_derivative = (y_error - self.prev_y_error) / self.dt
@@ -243,7 +243,7 @@ class Drone:
         # Mission parameters
         self.platform = Platform()
         self.operating_altitude = 5.0
-        self.hover_duration = 3.0
+        self.hover_duration = 2.0
 
         # Fiducial Marker Targets
         self.marker_position = Point()
@@ -385,9 +385,8 @@ class Drone:
         self.update_mission_state()
 
         if self.mission_state == MissionState.LANDED:
-            self.command.force.x, self.command.force.y, self.command.force.z = 0.0, 0.0, 0.0
-            self.command.torque.x, self.command.torque.y, self.command.torque.z = 0.0, 0.0, 0.0
-            #self.motor_msg.data = [0.0, 0.0, 0.0, 0.0]
+            self.command = Wrench()
+            #self.motor_msg.data = np.zeros(4)
 
         else:
             is_descending = (self.mission_state == MissionState.DESCEND)
