@@ -186,7 +186,7 @@ class Platform:
         # Fiducial Marker Pose Subscriber
         self.marker_sub = rospy.Subscriber('/apriltag/pose', PoseStamped, self.marker_callback)
         self.marker_pose = Pose()
-        self.maker_pose_detected = False
+        self.marker_pose_detected = False
         
         self.position = Point()
         self.height = 0.2
@@ -197,8 +197,22 @@ class Platform:
 
     def marker_callback(self, data: PoseStamped):
         self.marker_pose = data.pose
-        self.maker_pose_detected = True
+        marker_quat = [
+            self.marker_pose.orientation.x,
+            self.marker_pose.orientation.y,
+            self.marker_pose.orientation.z,
+            self.marker_pose.orientation.w
+        ]
+        self.marker_heading = euler_from_quaternion(marker_quat)[2]
+
+        self.marker_pose_detected = True
         rospy.loginfo_once(CYAN + "AprilTag detected!" + RESET)
+
+        rospy.loginfo(f"AprilTag detected: "
+                      f"x={self.marker_pose.position.x:.2f}, "
+                      f"y={self.marker_pose.position.y:.2f}, " 
+                      f"z={self.marker_pose.position.z:.2f}, "
+                      f"heading={self.marker_heading:.6f}")
 
 class Drone:
     def __init__(self):
