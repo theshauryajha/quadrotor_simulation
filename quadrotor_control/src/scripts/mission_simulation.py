@@ -250,7 +250,7 @@ class Drone:
         # Mission parameters
         self.platform = Platform()
         self.operating_altitude = 5.0
-        self.hover_duration = 1.0
+        self.hover_duration = 2.0
 
         # Fiducial Marker Targets
         self.marker_position = Point()
