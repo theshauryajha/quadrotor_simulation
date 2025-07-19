@@ -211,7 +211,7 @@ class Platform:
         self.marker_heading = euler_from_quaternion(marker_quat)[2]
 
         self.marker_pose_detected = True
-        rospy.loginfo_once(CYAN + "AprilTag detected! Switching to Tag data for landing position" + RESET)
+        rospy.loginfo_once(CYAN + "AprilTag detected!" + RESET)
 
         # rospy.loginfo(f"AprilTag detected: "
         #               f"x={self.marker_pose.position.x:.2f}, "
