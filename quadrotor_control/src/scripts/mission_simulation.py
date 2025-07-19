@@ -17,8 +17,9 @@ RESET = "\033[0m"
 class MissionState(Enum):
     TAKEOFF = "TAKEOFF"
     CRUISE = "CRUISE"
+    HOVER1 = "HOVER1"
     TRACK = "TRACK"
-    HOVER = "HOVER"
+    HOVER2 = "HOVER2"
     ROTATE = "ROTATE"
     DESCEND = "DESCEND"
     LANDED = "LANDED"
@@ -210,7 +211,7 @@ class Platform:
         self.marker_heading = euler_from_quaternion(marker_quat)[2]
 
         self.marker_pose_detected = True
-        rospy.loginfo_once(CYAN + "AprilTag detected!" + RESET)
+        rospy.loginfo_once(CYAN + "AprilTag detected! Switching to Tag data for landing position" + RESET)
 
         # rospy.loginfo(f"AprilTag detected: "
         #               f"x={self.marker_pose.position.x:.2f}, "
@@ -243,7 +244,8 @@ class Drone:
         # Mission parameters
         self.platform = Platform()
         self.operating_altitude = 5.0
-        self.hover_duration = 2.0
+        self.hover1_duration = 2.0
+        self.hover2_duration = 1.0
 
         # Fiducial Marker Targets
         self.marker_position = Point()
@@ -267,9 +269,10 @@ class Drone:
 
         self.state_transitions = {
             MissionState.TAKEOFF: (self.at_operating_altitude, MissionState.CRUISE),
-            MissionState.CRUISE: (self.marker_pose_detected, MissionState.TRACK),
-            MissionState.TRACK: (self.at_marker_xy, MissionState.HOVER),
-            MissionState.HOVER: (self.hover_complete, MissionState.DESCEND),
+            MissionState.CRUISE: (self.marker_pose_detected, MissionState.HOVER1),
+            MissionState.HOVER1: (self.hover1_complete, MissionState.TRACK),
+            MissionState.TRACK: (self.at_marker_xy, MissionState.HOVER2),
+            MissionState.HOVER2: (self.hover2_complete, MissionState.DESCEND),
             MissionState.DESCEND: (self.at_platform_level, MissionState.LANDED),
             MissionState.LANDED: (None, None)
         }
@@ -320,6 +323,10 @@ class Drone:
     def estimate_marker_position(self):
         self.marker_position.x = self.current_position.x - self.platform.marker_pose.position.x
         self.marker_position.y = self.current_position.y - self.platform.marker_pose.position.y
+
+    def hover1_complete(self):
+        elapsed_time = rospy.Time.now() - self.state_start_time
+        return elapsed_time.to_sec() >= self.hover1_duration
     
     def at_marker_xy(self):
         self.estimate_marker_position()
@@ -330,9 +337,9 @@ class Drone:
         vy = self.current_velocity.linear.y
         return dx <= 0.05 and dy <= 0.05 and vx <= 0.05 and vy <= 0.05
     
-    def hover_complete(self):
+    def hover2_complete(self):
         elapsed_time = rospy.Time.now() - self.state_start_time
-        return elapsed_time.to_sec() >= self.hover_duration
+        return elapsed_time.to_sec() >= self.hover2_duration
     
     def at_platform_level(self):
         return self.current_position.z <= self.platform.height + self.leg_length
@@ -366,10 +373,13 @@ class Drone:
         elif self.mission_state == MissionState.CRUISE:
             target = Point(self.platform.position.x, self.platform.position.y, self.operating_altitude)
 
+        elif self.mission_state == MissionState.HOVER1:
+            target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
+
         elif self.mission_state == MissionState.TRACK:
             target = Point(self.marker_position.x, self.marker_position.y, self.operating_altitude)
 
-        elif self.mission_state == MissionState.HOVER:
+        elif self.mission_state == MissionState.HOVER2:
             target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.DESCEND:
@@ -379,7 +389,7 @@ class Drone:
             target = self.current_position
 
         self.controller.update_target(target)
-        rospy.loginfo(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
+        #rospy.loginfo(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
 
     def fly(self, event):
         self.update_mission_state()
