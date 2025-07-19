@@ -54,7 +54,7 @@ class Controller:
 
         self.max_cruise_accel = 10.0
         self.max_descent_accel = 2.0
-        self.max_yaw_accel = np.pi / 36
+        self.max_yaw_accel = np.pi / 18
 
         self.dt = 0.01 # 10ms / iteration
 
