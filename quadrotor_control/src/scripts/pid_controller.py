@@ -110,7 +110,7 @@ class PIDController:
         return sway_command
     
     def yaw(self, current_heading: float) -> float:
-        Kp, Ki, Kd = 1.0, 0.0, 0.0
+        Kp, Ki, Kd = 0.3, 0.001, 0.7
 
         heading_error = self.target_heading - current_heading
         heading_error = self.normalize_angle(heading_error)
@@ -149,7 +149,7 @@ class Drone:
         self.current_velocity = Twist()
 
         self.target_point = Point(4.0, 3.0, 5.0)
-        self.target_heading = 0.0
+        self.target_heading = np.pi / 4
 
         self.controller = PIDController(self.target_point, self.target_heading)
         self.command = Wrench()
@@ -188,7 +188,7 @@ class Drone:
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current orientation about x axis (roll): {self.current_attitude[0]:.2f}")
         #rospy.loginfo(f"Current orientation about y axis (pitch): {self.current_attitude[1]:.2f}")
-        #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
+        rospy.loginfo(f"Current heading: {self.current_attitude[2]:.3f}")
 
     def fly(self, event):
         self.command.force.z = self.controller.thrust(self.current_position.z)
