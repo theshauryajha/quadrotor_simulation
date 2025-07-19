@@ -337,6 +337,16 @@ class Controller:
         return yaw_command
 
     def normalize_angle(self, angle: float) -> float:
+        """
+        Clamp an angle to the range [-pi, pi].
+
+        Args:
+            angle(float): Angle to be normalized
+        
+        Returns:
+            float: Normalized angle
+        """
+
         while angle < -np.pi:
             angle += 2 * np.pi
         while angle > np.pi:
