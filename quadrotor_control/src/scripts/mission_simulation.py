@@ -17,7 +17,9 @@ RESET = "\033[0m"
 class MissionState(Enum):
     TAKEOFF = "TAKEOFF"
     CRUISE = "CRUISE"
+    TRACK = "TRACK"
     HOVER = "HOVER"
+    ROTATE = "ROTATE"
     DESCEND = "DESCEND"
     LANDED = "LANDED"
 
@@ -54,8 +56,9 @@ class Controller:
 
         self.dt = 0.01 # 10ms / iteration
 
-    def update_target(self, new_target: Point):
-        self.target_point = new_target
+    def update_target(self, new_target_point: Point, new_target_heading: float = 0.0):
+        self.target_point = new_target_point
+        self.target_heading = new_target_heading
 
     def limit_acceleration(self, current_command: float, prev_command: float, max_accel: float) -> float:
             max_change = max_accel * self.dt
@@ -209,11 +212,11 @@ class Platform:
         self.marker_pose_detected = True
         rospy.loginfo_once(CYAN + "AprilTag detected!" + RESET)
 
-        rospy.loginfo(f"AprilTag detected: "
-                      f"x={self.marker_pose.position.x:.2f}, "
-                      f"y={self.marker_pose.position.y:.2f}, " 
-                      f"z={self.marker_pose.position.z:.2f}, "
-                      f"heading={self.marker_heading:.6f}")
+        # rospy.loginfo(f"AprilTag detected: "
+        #               f"x={self.marker_pose.position.x:.2f}, "
+        #               f"y={self.marker_pose.position.y:.2f}, " 
+        #               f"z={self.marker_pose.position.z:.2f}, "
+        #               f"heading={self.marker_heading:.6f}")
 
 class Drone:
     def __init__(self):
@@ -242,9 +245,14 @@ class Drone:
         self.operating_altitude = 5.0
         self.hover_duration = 3.0
 
+        # Fiducial Marker Targets
+        self.marker_position = Point()
+        self.marker_heading = 0.0
+
         # State variables
         self.current_position = Point()
         self.current_attitude = np.zeros(3)
+        self.current_heading = self.current_attitude[2]
         self.current_velocity = Twist()
 
         # Controller
@@ -259,7 +267,8 @@ class Drone:
 
         self.state_transitions = {
             MissionState.TAKEOFF: (self.at_operating_altitude, MissionState.CRUISE),
-            MissionState.CRUISE: (self.at_platform_xy, MissionState.HOVER),
+            MissionState.CRUISE: (self.marker_pose_detected, MissionState.TRACK),
+            MissionState.TRACK: (self.at_marker_xy, MissionState.HOVER),
             MissionState.HOVER: (self.hover_complete, MissionState.DESCEND),
             MissionState.DESCEND: (self.at_platform_level, MissionState.LANDED),
             MissionState.LANDED: (None, None)
@@ -292,21 +301,31 @@ class Drone:
         ]
         
         self.current_attitude = euler_from_quaternion(quat)
+        self.current_heading = self.current_attitude[2]
 
         #rospy.loginfo(f"Current position (x,y): {self.current_position.x:.2f}, {self.current_position.y:.2f}")
         #rospy.loginfo(f"Current height: {self.current_position.z:.2f}")
         #rospy.loginfo(f"Current orientation about x axis (roll): {self.current_attitude[0]:.2f}")
         #rospy.loginfo(f"Current orientation about y axis (pitch): {self.current_attitude[1]:.2f}")
-        #rospy.loginfo(f"Current heading: {self.current_attitude[2]:.2f}")
+        #rospy.loginfo(f"Current heading: {self.current_heading:.2f}")
 
     def at_operating_altitude(self):
         dz = abs(self.operating_altitude - self.current_position.z)
         vz = self.current_velocity.linear.z
         return dz <= 0.1 and vz <= 0.1
     
-    def at_platform_xy(self):
-        dx = self.platform.position.x - self.current_position.x
-        dy = self.platform.position.y - self.current_position.y
+    def marker_pose_detected(self):
+        return self.platform.marker_pose_detected
+    
+    def estimate_marker_position(self):
+        self.marker_position.x = self.current_position.x - self.platform.marker_pose.position.x
+        self.marker_position.y = self.current_position.y - self.platform.marker_pose.position.y
+    
+    def at_marker_xy(self):
+        self.estimate_marker_position()
+
+        dx = self.marker_position.x - self.current_position.x
+        dy = self.marker_position.y - self.current_position.y
         vx = self.current_velocity.linear.x
         vy = self.current_velocity.linear.y
         return dx <= 0.05 and dy <= 0.05 and vx <= 0.05 and vy <= 0.05
@@ -332,6 +351,10 @@ class Drone:
         rospy.loginfo(CYAN + f"Mission state transition: {self.mission_state.value} -> {next_state.value}" + RESET)
 
         self.mission_state = next_state
+        
+        if self.mission_state == MissionState.TRACK:
+            self.estimate_marker_position()
+
         self.state_start_time = rospy.Time.now()
 
         self.set_state_target()
@@ -343,24 +366,27 @@ class Drone:
         elif self.mission_state == MissionState.CRUISE:
             target = Point(self.platform.position.x, self.platform.position.y, self.operating_altitude)
 
+        elif self.mission_state == MissionState.TRACK:
+            target = Point(self.marker_position.x, self.marker_position.y, self.operating_altitude)
+
         elif self.mission_state == MissionState.HOVER:
             target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
 
         elif self.mission_state == MissionState.DESCEND:
-            target = Point(self.platform.position.x, self.platform.position.y, self.platform.height)
+            target = Point(self.marker_position.x, self.marker_position.y, self.platform.height)
         
         elif self.mission_state == MissionState.LANDED:
             target = self.current_position
 
         self.controller.update_target(target)
-        #rospy.loginfo(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
+        rospy.loginfo(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
 
     def fly(self, event):
         self.update_mission_state()
 
         if self.mission_state == MissionState.LANDED:
-            self.command.force.z = 0.0
-            self.command.force.x, self.command.force.y = 0.0, 0.0
+            self.command.force.x, self.command.force.y, self.command.force.z = 0.0, 0.0, 0.0
+            self.command.torque.x, self.command.torque.y, self.command.torque.z = 0.0, 0.0, 0.0
             #self.motor_msg.data = [0.0, 0.0, 0.0, 0.0]
 
         else:
