@@ -48,39 +48,6 @@ class Controller:
     """
     A PID Controller class with methods to compute control outputs for each of
     the 6 Degrees of Freedom with independent gain coefficients.
-
-    Attributes:
-        target_point (Point): The target position in 3D space
-        target_heading (float): The desired yaw angle in radians
-
-        prev_*_error (float): Previous cycle error values for derivative control
-        *_error_integral (float): Accumulated error values for integral control
-
-        prev_*_command (float): Previous command outputs to limit acceleration
-
-        max_*_accel (float): Acceleration limits for smoother control
-
-        dt (float): Time step between control uodates (seconds)
-
-    Methods:
-        update_target_*(new_target_*):
-            Update Drone's target parameters
-        limit_acceleration(current_command, prev_command, max_accel):
-            Clamp commanded changes to respect acceleration limits.
-        thrust(current_altitude, is_descending):
-            Compute vertical thrust command
-        surge(current_x):
-            Compute forward (body x-direction) motion command
-        sway(current_y):
-            Compute lateral (body y-direction) motion command
-        roll_rate(current_roll_velocity):
-            Stabilize roll by minimizing angular velocity about body x-axis
-        pitch_rate(current_pitch_velocity):
-            Stabilize pitch by minimizing angular velocity about body y-axis
-        yaw(current_heading):
-            Compute rotational (about body z-axis) motion command
-        normalize_angle(angle):
-            Normalize any angle to the range [-pi, pi]        
     """
 
     def __init__(self, target_point: Point, target_heading: float = 0.0):
@@ -92,9 +59,11 @@ class Controller:
             target_heading(float): The desired yaw angle in radians
         """
 
+        # Controller target parameters
         self.target_point = target_point
         self.target_heading = target_heading
 
+        # Derivative and Integral control parameters
         self.prev_height_error = 0.0
         self.height_error_integral = 0.0
 
@@ -113,15 +82,18 @@ class Controller:
         self.prev_heading_error = 0.0
         self.heading_error_integral = 0.0
 
+        # Previous control outputs for limiting acceleration
         self.prev_thrust_command = 0.0
         self.prev_surge_command = 0.0
         self.prev_sway_command = 0.0
         self.prev_yaw_command = 0.0
 
+        # Acceleration limits
         self.max_cruise_accel = 10.0
         self.max_descent_accel = 2.0
         self.max_yaw_accel = np.pi / 18
 
+        # Control update rate
         self.dt = 0.01 # 10ms / iteration
 
     def update_target_position(self, new_target_point: Point):
@@ -391,6 +363,7 @@ class Platform:
         #               f"y={self.marker_pose.position.y:.2f}, " 
         #               f"z={self.marker_pose.position.z:.2f}, "
         #               f"heading={self.marker_heading:.6f}")
+
 
 class Drone:
     def __init__(self):
