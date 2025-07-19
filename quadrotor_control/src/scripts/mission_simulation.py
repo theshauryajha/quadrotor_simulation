@@ -17,9 +17,8 @@ RESET = "\033[0m"
 class MissionState(Enum):
     TAKEOFF = "TAKEOFF"
     CRUISE = "CRUISE"
-    HOVER1 = "HOVER1"
     TRACK = "TRACK"
-    HOVER2 = "HOVER2"
+    HOVER = "HOVER"
     ROTATE = "ROTATE"
     DESCEND = "DESCEND"
     LANDED = "LANDED"
@@ -51,14 +50,18 @@ class Controller:
         self.prev_thrust_command = 0.0
         self.prev_surge_command = 0.0
         self.prev_sway_command = 0.0
+        self.prev_yaw_command = 0.0
 
         self.max_cruise_accel = 10.0
         self.max_descent_accel = 2.0
+        self.max_yaw_accel = np.pi / 36
 
         self.dt = 0.01 # 10ms / iteration
 
-    def update_target(self, new_target_point: Point, new_target_heading: float = 0.0):
+    def update_target_position(self, new_target_point: Point):
         self.target_point = new_target_point
+
+    def update_target_heading(self, new_target_heading: float):
         self.target_heading = new_target_heading
 
     def limit_acceleration(self, current_command: float, prev_command: float, max_accel: float) -> float:
@@ -169,7 +172,10 @@ class Controller:
                        Kd * heading_error_derivative +
                        Ki * self.heading_error_integral)
         
+        yaw_command = self.limit_acceleration(yaw_command, self.prev_yaw_command, self.max_yaw_accel)
+        
         self.prev_heading_error = heading_error
+        self.prev_yaw_command = yaw_command
 
         return yaw_command
 
@@ -244,8 +250,7 @@ class Drone:
         # Mission parameters
         self.platform = Platform()
         self.operating_altitude = 5.0
-        self.hover1_duration = 2.0
-        self.hover2_duration = 1.0
+        self.hover_duration = 1.0
 
         # Fiducial Marker Targets
         self.marker_position = Point()
@@ -258,7 +263,7 @@ class Drone:
         self.current_velocity = Twist()
 
         # Controller
-        self.controller = Controller(self.platform.position)
+        self.controller = Controller(self.platform.position, 0.0)
         self.control_timer = rospy.Timer(rospy.Duration(1/100), self.fly) # 100Hz update rate
 
         # State machine
@@ -269,10 +274,10 @@ class Drone:
 
         self.state_transitions = {
             MissionState.TAKEOFF: (self.at_operating_altitude, MissionState.CRUISE),
-            MissionState.CRUISE: (self.marker_pose_detected, MissionState.HOVER1),
-            MissionState.HOVER1: (self.hover1_complete, MissionState.TRACK),
-            MissionState.TRACK: (self.at_marker_xy, MissionState.HOVER2),
-            MissionState.HOVER2: (self.hover2_complete, MissionState.DESCEND),
+            MissionState.CRUISE: (self.marker_pose_detected, MissionState.TRACK),
+            MissionState.TRACK: (self.at_marker_xy, MissionState.HOVER),
+            MissionState.HOVER: (self.hover_complete, MissionState.ROTATE),
+            MissionState.ROTATE: (self.aligned_with_marker, MissionState.DESCEND),
             MissionState.DESCEND: (self.at_platform_level, MissionState.LANDED),
             MissionState.LANDED: (None, None)
         }
@@ -323,10 +328,7 @@ class Drone:
     def estimate_marker_position(self):
         self.marker_position.x = self.current_position.x - self.platform.marker_pose.position.x
         self.marker_position.y = self.current_position.y - self.platform.marker_pose.position.y
-
-    def hover1_complete(self):
-        elapsed_time = rospy.Time.now() - self.state_start_time
-        return elapsed_time.to_sec() >= self.hover1_duration
+        self.marker_heading = self.platform.marker_heading
     
     def at_marker_xy(self):
         self.estimate_marker_position()
@@ -337,9 +339,14 @@ class Drone:
         vy = self.current_velocity.linear.y
         return dx <= 0.05 and dy <= 0.05 and vx <= 0.05 and vy <= 0.05
     
-    def hover2_complete(self):
+    def hover_complete(self):
         elapsed_time = rospy.Time.now() - self.state_start_time
-        return elapsed_time.to_sec() >= self.hover2_duration
+        return elapsed_time.to_sec() >= self.hover_duration
+    
+    def aligned_with_marker(self):
+        heading_error = self.controller.normalize_angle(self.current_heading - self.marker_heading)
+        yaw_velocity = self.current_velocity.angular.z
+        return abs(heading_error) <= np.pi / 36 and yaw_velocity < 0.1
     
     def at_platform_level(self):
         return self.current_position.z <= self.platform.height + self.leg_length
@@ -373,14 +380,15 @@ class Drone:
         elif self.mission_state == MissionState.CRUISE:
             target = Point(self.platform.position.x, self.platform.position.y, self.operating_altitude)
 
-        elif self.mission_state == MissionState.HOVER1:
-            target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
-
         elif self.mission_state == MissionState.TRACK:
             target = Point(self.marker_position.x, self.marker_position.y, self.operating_altitude)
 
-        elif self.mission_state == MissionState.HOVER2:
+        elif self.mission_state == MissionState.HOVER:
             target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
+
+        elif self.mission_state == MissionState.ROTATE:
+            target = Point(self.current_position.x, self.current_position.y, self.operating_altitude)
+            self.controller.update_target_heading(self.marker_heading)
 
         elif self.mission_state == MissionState.DESCEND:
             target = Point(self.marker_position.x, self.marker_position.y, self.platform.height)
@@ -388,7 +396,7 @@ class Drone:
         elif self.mission_state == MissionState.LANDED:
             target = self.current_position
 
-        self.controller.update_target(target)
+        self.controller.update_target_position(target)
         #rospy.loginfo(f"Updated target to: x={target.x:.2f}, y={target.y:.2f}, z={target.z:.2f}")
 
     def fly(self, event):
@@ -404,15 +412,13 @@ class Drone:
             self.command.force.z = self.controller.thrust(self.current_position.z, is_descending)
             self.command.force.x = self.controller.surge(self.current_position.x)
             self.command.force.y = self.controller.sway(self.current_position.y)
+            self.command.torque.z = self.controller.yaw(self.current_heading)
             # thrust_command = self.controller.thrust(self.current_position.z)
             # self.motor_msg.data = [self.base_speed + thrust_command] * 4
 
         # Stabilize roll and pitch using rate controllers
         self.command.torque.x = self.controller.roll_rate(self.current_velocity.angular.x)
         self.command.torque.y = self.controller.pitch_rate(self.current_velocity.angular.y)
-
-        # Heading controller
-        self.command.torque.z = self.controller.yaw(self.current_attitude[2])
 
         #self.motor_pub.publish(self.motor_msg)
         self.cmd_pub.publish(self.command)
