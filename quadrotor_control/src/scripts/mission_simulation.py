@@ -328,24 +328,46 @@ class Controller:
 
 class Platform:
     def __init__(self):
-        # Platform Position Subscriber & Publisher
+        """
+        Initializes the Platform object with publishers and subscribers for
+        platform and fiducial marker data.
+        """
+
+        # Platform Position Subscriber
         self.position_sub = rospy.Subscriber('/platform/ground_truth', Odometry, self.odom_callback)
-        self.position_pub = rospy.Publisher('/target_point', Point, queue_size=10)
 
         # Fiducial Marker Pose Subscriber
         self.marker_sub = rospy.Subscriber('/apriltag/pose', PoseStamped, self.marker_callback)
-        self.marker_pose = Pose()
-        self.marker_heading = 0.0
-        self.marker_pose_detected = False
-        
+
+        # Platform data
         self.position = Point()
         self.height = 0.2
 
+        # Fiducial Marker data
+        self.marker_pose = Pose()
+        self.marker_heading = 0.0
+        self.marker_pose_detected = False
+
     def odom_callback(self, data: Odometry):
+        """
+        Updates the platform's position obtained from GPS data
+
+        Args:
+            data(Odometry): Incoming position data from GPS
+        """
+
         self.position = data.pose.pose.position
-        self.position_pub.publish(self.position)
 
     def marker_callback(self, data: PoseStamped):
+        """
+        Updates the pose data obtained from the detected fiducial marker and
+        sets the detection flag and logs the information.
+
+        Args:
+            data(PoseStamped):  Incoming Pose data from fiducial marker
+                                detection
+        """
+        
         self.marker_pose = data.pose
         marker_quat = [
             self.marker_pose.orientation.x,
