@@ -156,7 +156,7 @@ class Controller:
         return pitch_command
     
     def yaw(self, current_heading: float) -> float:
-        Kp, Ki, Kd = 0.3, 0.0, 0.0
+        Kp, Ki, Kd = 0.3, 0.001, 0.7
 
         heading_error = self.target_heading - current_heading
         heading_error = self.normalize_angle(heading_error)
