@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- AprilTag detection node -->
+  <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="apriltag_ros_continuous_node" output="screen">
+    <!-- Remap camera topics -->
+    <remap from="image_rect" to="/bottom_camera/image_raw"/>
+    <remap from="camera_info" to="/bottom_camera/camera_info"/>
+    
+    <!-- Load AprilTag settings -->
+    <rosparam command="load" file="$(find quadrotor_description)/config/apriltag_settings.yaml"/>
+  </node>
+  
+  <!-- AprilTag detector node -->
+  <node pkg="quadrotor_control" type="apriltag_detector.py" name="vision_node" output="screen"/>
+
+  <!-- Start rqt_image_view to visualize AprilTag detections -->
+  <node name="bottom_camera_viewer" pkg="rqt_image_view" type="rqt_image_view" 
+        args="/tag_detections_image" output="screen"/>
+</launch>

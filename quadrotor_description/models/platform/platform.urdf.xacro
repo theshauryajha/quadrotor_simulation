@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot name="platform" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="pi" value="3.1415926535897931" />
+
+  <!-- Platform dimensions -->
+  <xacro:property name="platform_length" value="1.0" />
+  <xacro:property name="platform_width" value="1.0" />
+  <xacro:property name="platform_height" value="0.2" />
+  <xacro:property name="marker_size" value="0.8" />
+
+  <!-- Base link -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="20.0"/>
+      <inertia ixx="1.67" ixy="0.0" ixz="0.0" iyy="1.67" iyz="0.0" izz="3.33"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${platform_length} ${platform_width} ${platform_height}"/>
+      </geometry>
+      <material name="platform_grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${platform_length} ${platform_width} ${platform_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ArUco marker on top surface -->
+  <link name="marker_link">
+    <visual>
+      <origin xyz="0 0 0.001" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <box size="${marker_size} ${marker_size} 0.001"/>
+      </geometry>
+      <material name="marker_material">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="marker_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="marker_link"/>
+    <origin xyz="0 0 ${platform_height/2}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- GPS link -->
+  <link name="gps_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.02"/>
+      </geometry>
+      <material name="gps_grey">
+        <color rgba="0.3 0.3 0.3 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="gps_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="gps_link"/>
+    <origin xyz="0.45 0.45 ${platform_height/2 + 0.01}" rpy="0 0 0"/>
+  </joint>
+
+</robot>

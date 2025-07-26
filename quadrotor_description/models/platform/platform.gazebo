@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<robot name="platform" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Visual appearance -->
+  <gazebo reference="base_link">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <gazebo reference="marker_link">
+    <material>Gazebo/ArUcoMarker</material>
+  </gazebo>
+
+  <gazebo reference="gps_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <!-- Force plugin for platform movement -->
+  <gazebo>
+    <plugin name="platform_force" filename="libgazebo_ros_force.so">
+      <robotNamespace>/platform</robotNamespace>
+      <bodyName>base_link</bodyName>
+      <topicName>cmd_force</topicName>
+    </plugin>
+  </gazebo>
+
+  <!-- GPS Sensor -->
+  <gazebo reference="gps_link">
+    <sensor name="gps_sensor" type="gps">
+      <always_on>true</always_on>
+      <update_rate>10.0</update_rate>
+      <plugin name="gps_plugin" filename="libgazebo_ros_gps.so">
+        <robotNamespace>/platform</robotNamespace>
+        <topicName>gps</topicName>
+        <frameName>gps_link</frameName>
+        <updateRate>10.0</updateRate>
+        <gaussianNoise>0.0</gaussianNoise>
+        <velocityGaussianNoise>0.0</velocityGaussianNoise>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Odometry Plugin -->
+  <gazebo>
+    <plugin name="platform_groundtruth" filename="libgazebo_ros_p3d.so">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>100.0</updateRate>
+      <bodyName>base_link</bodyName>
+      <topicName>platform/ground_truth</topicName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <frameName>world</frameName>
+    </plugin>
+  </gazebo>
+
+</robot>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Launch Gazebo with an empty world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find quadrotor_description)/worlds/mission_world.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load the quadrotor URDF into the parameter server -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/models/quadrotor/quadrotor_main.xacro'" />
+
+  <!-- Load the landing platform URDF into the parameter server -->
+  <param name="platform_description" 
+         command="$(find xacro)/xacro --inorder '$(find quadrotor_description)/models/platform/platform_main.xacro'" />
+
+  <!-- Launch arguments for platform's spawn position and orientation -->
+  <arg name="x" default="8.0" />
+  <arg name="y" default="5.0" />
+  <arg name="yaw" default="0.785398" />
+
+  <!-- Spawn the quadrotor in Gazebo -->
+  <node name="spawn_quadrotor" pkg="gazebo_ros" type="spawn_model" 
+        args="-param robot_description -urdf -model quadrotor -x 0.0 -y 0.0 -z 1.5 -Y 0.0" 
+        respawn="false" output="screen"/>
+
+  <!-- Spawn the landing platform in Gazebo -->
+  <node name="spawn_platform" pkg="gazebo_ros" type="spawn_model" 
+        args="-param platform_description -urdf -model platform -x $(arg x) -y $(arg y) -z 0.1 -Y $(arg yaw)" 
+        respawn="false" output="screen"/>
+
+  <!-- Start the Planning & Control nodes -->
+  <node name="planning_node" pkg="quadrotor_control" type="mission_planner.py" output="screen"/>
+  <node name="control_node" pkg="quadrotor_control" type="flight_controller.py" output="screen"/>
+
+  <!-- Start the Vision node -->
+  <include file="$(find quadrotor_control)/launch/apriltag_detection.launch"/>
+</launch>
