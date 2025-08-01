@@ -7,7 +7,7 @@
   </gazebo>
 
   <gazebo reference="marker_link">
-    <material>Gazebo/ArUcoMarker</material>
+    <material>AprilTag/Tag23</material>
   </gazebo>
 
   <gazebo reference="gps_link">

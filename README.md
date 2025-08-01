@@ -46,11 +46,12 @@ mv quadrotor_simulation src
 rosdep install --from-paths src --ignore-src -r -y
 ```
 
-* Make the Python scripts and the launch files executable
+* Make the scripts and the launch files executable
 
 ```bash
 chmod +x src/quadrotor_control/src/scripts/*
 chmod +x src/quadrotor_control/launch/*
+chmod +x src/quadrotor_description/scripts/*
 ```
 
 * Build and source the workspace
@@ -58,6 +59,11 @@ chmod +x src/quadrotor_control/launch/*
 ```bash
 catkin_make
 source devel/setup.bash
+```
+
+* Setup the simulation environment
+```bash
+source src/quadrotor_description/scripts/setup_env.sh
 ```
 
 ## Launching the simulation

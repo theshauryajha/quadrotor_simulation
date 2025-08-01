@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- Set Gazebo resource path to include our custom materials -->
+  <env name="GAZEBO_RESOURCE_PATH" value="$(find quadrotor_description):$(optenv GAZEBO_RESOURCE_PATH)" />
+
   <!-- Launch Gazebo with an empty world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find quadrotor_description)/worlds/mission_world.world"/>
