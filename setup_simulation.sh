@@ -23,6 +23,7 @@ HAMMER="🔨"
 WRENCH="🔧"
 WORLD="🌍"
 INSTRUCTIONS="📋"
+TAG="🏷️"
 
 # Default ROS Noetic setup file path
 ROS_SETUP="/opt/ros/noetic/setup.bash"
@@ -140,7 +141,68 @@ check_rosdep() {
     fi
 }
 
-# Step 4: Install dependencies
+# Step 4: Check and install AprilTag ROS
+check_install_apriltag_ros() {
+    print_info "Checking for AprilTag ROS package..." "$BLUE"
+    
+    # Check if apriltag_ros package is available
+    if rospack find apriltag_ros >/dev/null 2>&1; then
+        print_success "AprilTag ROS package found"
+        return 0
+    else
+        print_warning "AprilTag ROS package not found"
+        print_info "Installing AprilTag ROS..."
+        
+        # Try to install via apt first
+        if sudo apt update && sudo apt install -y ros-noetic-apriltag-ros; then
+            print_success "AprilTag ROS installed successfully via apt"
+            
+            # Source ROS setup again to make sure new package is available
+            source "$ROS_SETUP"
+            
+            # Verify installation
+            if rospack find apriltag_ros >/dev/null 2>&1; then
+                print_success "AprilTag ROS installation verified"
+                return 0
+            else
+                print_warning "AprilTag ROS installed but not found in ROS path"
+                print_info "This might be resolved after workspace build"
+                return 0
+            fi
+        else
+            print_error "Failed to install AprilTag ROS via apt"
+            print_info "Will attempt to build from source in workspace..."
+            
+            # Move to workspace src directory
+            cd ..
+            
+            # Clone apriltag_ros repository
+            print_info "Cloning AprilTag ROS from GitHub..."
+            if git clone https://github.com/AprilRobotics/apriltag_ros.git src/apriltag_ros; then
+                print_success "AprilTag ROS source code downloaded"
+                
+                # Also clone apriltag library if needed
+                if [ ! -d "src/apriltag" ]; then
+                    print_info "Cloning AprilTag library..."
+                    if git clone https://github.com/AprilRobotics/apriltag.git src/apriltag; then
+                        print_success "AprilTag library downloaded"
+                    else
+                        print_warning "Failed to clone AprilTag library, but continuing..."
+                    fi
+                fi
+                
+                cd src
+                return 0
+            else
+                print_error "Failed to clone AprilTag ROS repository"
+                print_error "You may need to install it manually later"
+                return 1
+            fi
+        fi
+    fi
+}
+
+# Step 5: Install dependencies
 install_dependencies() {
     print_info "Installing workspace dependencies..." "$BLUE"
     
@@ -158,7 +220,7 @@ install_dependencies() {
     fi
 }
 
-# Step 5: Make files executable
+# Step 6: Make files executable
 make_files_executable() {
     print_info "Making Python scripts and launch files executable..." "$BLUE"
     
@@ -181,7 +243,7 @@ make_files_executable() {
     return 0
 }
 
-# Step 6: Build workspace
+# Step 7: Build workspace
 build_workspace() {
     print_info "Building workspace with catkin_make..." "$BLUE"
     
@@ -196,7 +258,7 @@ build_workspace() {
     fi
 }
 
-# Step 7: Source workspace
+# Step 8: Source workspace
 source_workspace() {
     print_info "Sourcing workspace..." "$BLUE"
     
@@ -210,7 +272,7 @@ source_workspace() {
     fi
 }
 
-# Step 8: Setup Gazebo environment
+# Step 9: Setup Gazebo environment
 setup_gazebo_environment() {
     print_info "Setting up Gazebo environment..." "$BLUE"
     
@@ -268,34 +330,41 @@ if ! check_rosdep; then
 fi
 echo ""
 
-# Step 4: Install dependencies
-echo -e "${BLUE}Step 4: Installing dependencies...${NC}"
+# Step 4: Check and install AprilTag ROS
+echo -e "${BLUE}Step 4: Checking and installing AprilTag ROS...${NC}"
+if ! check_install_apriltag_ros; then
+    print_warning "AprilTag ROS installation failed, but continuing with setup..."
+fi
+echo ""
+
+# Step 5: Install dependencies
+echo -e "${BLUE}Step 5: Installing dependencies...${NC}"
 if ! install_dependencies; then
     exit 1
 fi
 echo ""
 
-# Step 5: Make files executable
-echo -e "${BLUE}Step 5: Making files executable...${NC}"
+# Step 6: Make files executable
+echo -e "${BLUE}Step 6: Making files executable...${NC}"
 make_files_executable
 echo ""
 
-# Step 6: Build workspace
-echo -e "${BLUE}Step 6: Building workspace...${NC}"
+# Step 7: Build workspace
+echo -e "${BLUE}Step 7: Building workspace...${NC}"
 if ! build_workspace; then
     exit 1
 fi
 echo ""
 
-# Step 7: Source workspace
-echo -e "${BLUE}Step 7: Sourcing workspace...${NC}"
+# Step 8: Source workspace
+echo -e "${BLUE}Step 8: Sourcing workspace...${NC}"
 if ! source_workspace; then
     exit 1
 fi
 echo ""
 
-# Step 8: Setup Gazebo environment
-echo -e "${BLUE}Step 8: Setting up Gazebo environment...${NC}"
+# Step 9: Setup Gazebo environment
+echo -e "${BLUE}Step 9: Setting up Gazebo environment...${NC}"
 setup_gazebo_environment
 echo ""
 
