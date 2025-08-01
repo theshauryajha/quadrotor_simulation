@@ -3,20 +3,25 @@
 ## 🧩 Project Structure
 
 ```bash
-quadrotor_simulation/
-├── quadrotor_control/         # Contains the ROS Interfacing needed to run the Simulation
-│   ├── launch/                # Launch files
-│   ├── src/scripts/           # Python scripts: flight control, mission planning, AprilTag detection
-│   ├── CMakeLists.txt
-│   └── package.xml
-├── quadrotor_description/     # Contains model descriptions, plugins, and world setup
-│   ├── config/                # AprilTag settings configuration
-│   ├── models/                # Drone and Platform URDF/Xacro models
-│   ├── src/                   # Custom motor control plugin
-│   ├── worlds/                # Simulation environment files
-│   ├── CMakeLists.txt
-│   └── package.xml
-└── .gitignore
+catkin_ws/
+├── src/
+│   ├── quadrotor_control/         # Contains the ROS Interfacing needed to run the Simulation
+│   │   ├── launch/                # Launch files
+│   │   ├── src/scripts/           # Python scripts: flight control, mission planning, AprilTag detection
+│   │   ├── CMakeLists.txt
+│   │   └── package.xml
+│   ├── quadrotor_description/     # Contains model descriptions, plugins, and world setup
+│   │   ├── config/                # AprilTag settings configuration
+│   │   ├── media/materials/       # Gazebo materials and textures
+│   │   ├── models/                # Drone and Platform URDF/Xacro models
+│   │   ├── src/                   # Custom motor control plugin
+│   │   ├── worlds/                # Simulation environment files
+│   │   ├── CMakeLists.txt
+│   │   └── package.xml
+│   └── setup_simulation.sh
+├── devel/
+├── build/
+└── CMakeLists.txt
 ```
 
 ## 🛠 Dependencies
@@ -24,6 +29,7 @@ quadrotor_simulation/
 * ROS Noetic or Melodic
 * Gazebo 9+
 * `apriltag_ros`
+* `rosdep`
 
 ## Setting up the Project
 
@@ -31,39 +37,20 @@ quadrotor_simulation/
 
 ```bash
 mkdir catkin_ws
+cd catkin_ws
 ```
 
 * Inside the workspcace, clone the repository
 
 ```bash
 git clone git@github.com:theshauryajha/quadrotor_simulation.git
-mv quadrotor_simulation src
 ```
 
-* Install dependencies
-
+* Make the setup script executable and run it
 ```bash
-rosdep install --from-paths src --ignore-src -r -y
-```
-
-* Make the scripts and the launch files executable
-
-```bash
-chmod +x src/quadrotor_control/src/scripts/*
-chmod +x src/quadrotor_control/launch/*
-chmod +x src/quadrotor_description/scripts/*
-```
-
-* Build and source the workspace
-
-```bash
-catkin_make
-source devel/setup.bash
-```
-
-* Setup the simulation environment
-```bash
-source src/quadrotor_description/scripts/setup_env.sh
+cd quarotor_simulation
+chmod +x setup_simulation.sh
+./setup_simulation.sh
 ```
 
 ## Launching the simulation
