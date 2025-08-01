@@ -53,6 +53,12 @@ chmod +x setup_simulation.sh
 ./setup_simulation.sh
 ```
 
+* Source the workspace
+```bash
+cd ~/catkin_ws
+source devel/setup.bash
+```
+
 ## Launching the simulation
 
 * Run the main launch file
