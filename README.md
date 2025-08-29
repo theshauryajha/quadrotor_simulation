@@ -74,7 +74,3 @@ roslaunch quadrotor_control simulation.launch x:=2.0 y:=3.5 yaw:=1.57
 ```
 
 * This spawns the platform at (2.0, 3.5) and rotated in the xy plane by 90 degrees
-
-## 🚧 Ongoing Work
-
-The project is currently being extended to support remote control of the landing platform. Additionally, the mission planner is being modified to enable successful drone landings on a *moving* platform, adding dynamic interaction capabilities to the system.
